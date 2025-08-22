@@ -1,92 +1,124 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Radio, Users, Newspaper, Copyright, Phone, Play } from "lucide-react";
 
-export default function Header() {
-  const [isOpen, setIsOpen] = useState(false);
+interface HeaderProps {
+  onSectionChange: (section: string) => void;
+  currentSection: string;
+}
+
+export default function Header({ onSectionChange, currentSection }: HeaderProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navigationItems = [
-    { name: "Haitian Streams", href: "#streams", icon: Play },
-    { name: "Channels", href: "#channels", icon: Users },
-    { name: "Radio", href: "#radio", icon: Radio },
-    { name: "Updates", href: "#updates", icon: Newspaper },
-    { name: "Copyright Notice", href: "#copyright", icon: Copyright },
-    { name: "Contact", href: "mailto:kinglionqr@gmail.com", icon: Phone },
+    { id: 'streams', name: "Haitian Streams", icon: Play },
+    { id: 'channels', name: "Channels", icon: Users },
+    { id: 'radio', name: "Radio", icon: Radio },
+    { id: 'updates', name: "Updates", icon: Newspaper },
+    { id: 'copyright', name: "Copyright Notice", icon: Copyright },
   ];
 
+  const handleSectionClick = (sectionId: string) => {
+    onSectionChange(sectionId);
+    setIsMenuOpen(false);
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full bg-black border-b border-gray-800">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Logo - Mobile First */}
-        <div className="flex items-center space-x-3">
-          <img 
-            src="https://i.ibb.co/CsB7SJp0/best.png" 
-            alt="LQR SPORT" 
-            className="w-8 h-8 md:w-10 md:h-10 object-contain"
-          />
-          <div className="flex flex-col">
-            <h1 className="text-lg md:text-xl font-bold text-white">LQR SPORT</h1>
-            <p className="text-xs text-gray-400 hidden sm:block">Haitian Media Hub</p>
+    <>
+      <header className="sticky top-0 z-40 w-full bg-black border-b border-gray-800">
+        <div className="px-4 h-16 flex items-center justify-between">
+          {/* Menu Button and Logo */}
+          <div className="flex items-center space-x-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-white hover:bg-gray-800"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+            
+            <div className="flex items-center space-x-3">
+              <img 
+                src="https://i.ibb.co/CsB7SJp0/best.png" 
+                alt="LQR SPORT" 
+                className="w-8 h-8 md:w-10 md:h-10 object-contain"
+              />
+              <div className="flex flex-col">
+                <h1 className="text-lg md:text-xl font-bold text-white">LQR SPORT</h1>
+                <p className="text-xs text-gray-400 hidden sm:block">Haitian Media Hub</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Link */}
+          <a 
+            href="mailto:kinglionqr@gmail.com"
+            className="hidden md:flex items-center space-x-2 text-sm text-gray-300 hover:text-white transition-colors"
+          >
+            <Phone className="w-4 h-4" />
+            <span>Contact</span>
+          </a>
+        </div>
+      </header>
+
+      {/* Left Sidebar Menu */}
+      <div className={`fixed top-0 left-0 h-full w-64 bg-gray-900 border-r border-gray-800 transform transition-transform duration-300 ease-in-out z-50 ${
+        isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        {/* Menu Header */}
+        <div className="p-6 border-b border-gray-800">
+          <div className="flex items-center space-x-3">
+            <img 
+              src="https://i.ibb.co/CsB7SJp0/best.png" 
+              alt="LQR SPORT" 
+              className="w-8 h-8 object-contain"
+            />
+            <div>
+              <h2 className="font-bold text-white">LQR SPORT</h2>
+              <p className="text-xs text-gray-400">Haitian Media Hub</p>
+            </div>
           </div>
         </div>
 
-        {/* Desktop Navigation - Hidden on mobile */}
-        <nav className="hidden lg:flex items-center space-x-6">
+        {/* Navigation Items */}
+        <nav className="p-4 space-y-2">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             return (
-              <a
-                key={item.name}
-                href={item.href}
-                className="text-sm font-medium text-gray-300 hover:text-white transition-colors flex items-center space-x-1"
+              <button
+                key={item.id}
+                onClick={() => handleSectionClick(item.id)}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                  currentSection === item.id
+                    ? 'bg-orange-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }`}
               >
-                <Icon className="w-4 h-4" />
-                <span>{item.name}</span>
-              </a>
+                <Icon className="w-5 h-5" />
+                <span className="font-medium">{item.name}</span>
+              </button>
             );
           })}
+          
+          {/* Contact Link for Mobile */}
+          <a
+            href="mailto:kinglionqr@gmail.com"
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+          >
+            <Phone className="w-5 h-5" />
+            <span className="font-medium">Contact</span>
+          </a>
         </nav>
-
-        {/* Mobile Navigation */}
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild className="lg:hidden">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-gray-800">
-              <Menu className="h-6 w-6" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-[280px] bg-gray-900 border-gray-800">
-            <div className="flex flex-col space-y-1 mt-6">
-              <div className="flex items-center space-x-3 pb-4 border-b border-gray-800">
-                <img 
-                  src="https://i.ibb.co/CsB7SJp0/best.png" 
-                  alt="LQR SPORT" 
-                  className="w-8 h-8 object-contain"
-                />
-                <div>
-                  <h2 className="font-bold text-white">LQR SPORT</h2>
-                  <p className="text-xs text-gray-400">Haitian Media Hub</p>
-                </div>
-              </div>
-              {navigationItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center space-x-3 text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 transition-colors py-3 px-2 rounded-md"
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span>{item.name}</span>
-                  </a>
-                );
-              })}
-            </div>
-          </SheetContent>
-        </Sheet>
       </div>
-    </header>
+
+      {/* Overlay */}
+      {isMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
+    </>
   );
 }
