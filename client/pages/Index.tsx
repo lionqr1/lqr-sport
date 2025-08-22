@@ -481,12 +481,93 @@ export default function Index() {
             <Card className="bg-gray-800 border-gray-700">
               <CardContent className="p-6">
                 <p className="text-gray-300 leading-relaxed">
-                  All channels featured on LQR SPORT are publicly available from the internet. 
-                  We do not host, own, or claim any rights over the content displayed. 
+                  All channels featured on LQR SPORT are publicly available from the internet.
+                  We do not host, own, or claim any rights over the content displayed.
                   All content belongs to their respective owners and broadcasters.
                 </p>
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* Contact Section */}
+        {currentSection === 'contact' && (
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold mb-6 text-center">Contact Us</h2>
+            <div className="max-w-2xl mx-auto">
+              <Card className="bg-gray-800 border-gray-700">
+                <CardContent className="p-8">
+                  <div className="text-center space-y-6">
+                    {/* Logo */}
+                    <div className="flex justify-center">
+                      <img
+                        src="https://i.ibb.co/CsB7SJp0/best.png"
+                        alt="LQR SPORT"
+                        className="w-16 h-16 object-contain"
+                      />
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className="space-y-4">
+                      <h3 className="text-2xl font-bold text-white">LQR SPORT</h3>
+                      <p className="text-gray-300">Haitian Media Hub</p>
+
+                      {/* Email */}
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <div className="flex items-center justify-center space-x-3">
+                          <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                            </svg>
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm text-gray-400">Email</p>
+                            <p className="text-lg font-semibold text-white">mail.lqrsport@dr.com</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Business Hours */}
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <div className="flex items-center justify-center space-x-3">
+                          <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
+                            <Clock className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm text-gray-400">Support Hours</p>
+                            <p className="text-lg font-semibold text-white">24/7 Available</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Location */}
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <div className="flex items-center justify-center space-x-3">
+                          <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                            </svg>
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm text-gray-400">Serving</p>
+                            <p className="text-lg font-semibold text-white">Haiti & Worldwide</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="pt-4 border-t border-gray-600">
+                      <p className="text-gray-300 leading-relaxed">
+                        Get in touch with us for any questions, feedback, or support regarding our Haitian streaming services.
+                        We're here to help you enjoy the best of Haitian media content.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
       </main>
