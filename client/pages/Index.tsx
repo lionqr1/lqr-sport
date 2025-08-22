@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
+import VideoPlayerModal from "@/components/VideoPlayerModal";
 import { supabase, type Channel, type LiveTV, type Radio, type Update } from "@/lib/supabase";
 import { 
   Play, 
@@ -38,12 +39,16 @@ export default function Index() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Video Player Modal states
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [currentStreamUrl, setCurrentStreamUrl] = useState('');
+  const [currentStreamTitle, setCurrentStreamTitle] = useState('');
+
   // Media player states
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentRadio, setCurrentRadio] = useState<Radio | null>(null);
   const [audio] = useState(new Audio());
   const [isMuted, setIsMuted] = useState(false);
-  const [currentStream, setCurrentStream] = useState<string | null>(null);
 
   // Fetch functions
   const fetchChannels = async () => {
@@ -139,17 +144,17 @@ export default function Index() {
     setIsMuted(!isMuted);
   };
 
-  const openStream = (url: string) => {
-    setCurrentStream(url);
-    // In a real app, you'd open a video player modal here
-    window.open(url, '_blank');
+  // Video player functions
+  const openVideoPlayer = (url: string, title: string) => {
+    setCurrentStreamUrl(url);
+    setCurrentStreamTitle(title);
+    setIsVideoModalOpen(true);
   };
 
-  // Navigation function
-  const showSection = (section: string) => {
-    setCurrentSection(section);
-    // Scroll to top on mobile
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const closeVideoPlayer = () => {
+    setIsVideoModalOpen(false);
+    setCurrentStreamUrl('');
+    setCurrentStreamTitle('');
   };
 
   // Filter functions
@@ -197,33 +202,13 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <Header />
+      {/* Add HLS.js script */}
+      <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
       
-      {/* Mobile Navigation Tabs */}
-      <div className="bg-gray-800 border-b border-gray-700 px-4 py-2 overflow-x-auto">
-        <div className="flex space-x-1 min-w-max">
-          {[
-            { id: 'streams', label: 'Streams', icon: Play },
-            { id: 'channels', label: 'Channels', icon: Users },
-            { id: 'radio', label: 'Radio', icon: RadioIcon },
-            { id: 'updates', label: 'Updates', icon: Clock },
-            { id: 'copyright', label: 'Legal', icon: AlertCircle }
-          ].map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => showSection(id)}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                currentSection === id 
-                  ? 'bg-orange-600 text-white' 
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <Header 
+        onSectionChange={setCurrentSection} 
+        currentSection={currentSection}
+      />
 
       <main className="container mx-auto px-4 py-6">
         {/* Haitian Streams Section */}
@@ -275,7 +260,7 @@ export default function Index() {
                         </div>
                       </div>
                       <Button 
-                        onClick={() => openStream(stream.stream_url)}
+                        onClick={() => openVideoPlayer(stream.stream_url, stream.name)}
                         className="w-full bg-orange-600 hover:bg-orange-700 text-white"
                       >
                         <Play className="w-4 h-4 mr-2" />
@@ -329,7 +314,7 @@ export default function Index() {
                         <h3 className="font-semibold text-white">{channel.name}</h3>
                       </div>
                       <Button 
-                        onClick={() => openStream(channel.stream_url)}
+                        onClick={() => openVideoPlayer(channel.stream_url, channel.name)}
                         className="w-full bg-orange-600 hover:bg-orange-700 text-white"
                       >
                         <Play className="w-4 h-4 mr-2" />
@@ -505,6 +490,14 @@ export default function Index() {
           </div>
         )}
       </main>
+
+      {/* Video Player Modal */}
+      <VideoPlayerModal
+        isOpen={isVideoModalOpen}
+        onClose={closeVideoPlayer}
+        streamUrl={currentStreamUrl}
+        title={currentStreamTitle}
+      />
     </div>
   );
 }
