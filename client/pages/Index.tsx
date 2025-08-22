@@ -49,6 +49,7 @@ export default function Index() {
   const [currentRadio, setCurrentRadio] = useState<Radio | null>(null);
   const [audio] = useState(new Audio());
   const [isMuted, setIsMuted] = useState(false);
+  const [radioStatus, setRadioStatus] = useState<Record<number, 'online' | 'offline' | 'checking'>>({});
 
   // Fetch functions
   const fetchChannels = async () => {
@@ -94,11 +95,15 @@ export default function Index() {
         .from('radio')
         .select('*')
         .order('title');
-      
+
       if (error) throw error;
       setRadio(data || []);
       if (data && data.length > 0) {
         setCurrentRadio(data[0]);
+        // Check status of all radio stations
+        data.forEach(station => {
+          checkRadioStatus(station);
+        });
       }
       setErrors(prev => ({ ...prev, radio: '' }));
     } catch (error) {
@@ -126,10 +131,45 @@ export default function Index() {
     }
   };
 
+  // Check radio station status
+  const checkRadioStatus = async (station: Radio) => {
+    setRadioStatus(prev => ({ ...prev, [station.id]: 'checking' }));
+
+    try {
+      // Create a test audio element to check if the stream works
+      const testAudio = new Audio();
+      testAudio.preload = 'none';
+      testAudio.src = station.live_url;
+
+      return new Promise<void>((resolve) => {
+        const timeout = setTimeout(() => {
+          setRadioStatus(prev => ({ ...prev, [station.id]: 'offline' }));
+          resolve();
+        }, 5000); // 5 second timeout
+
+        testAudio.addEventListener('canplaythrough', () => {
+          clearTimeout(timeout);
+          setRadioStatus(prev => ({ ...prev, [station.id]: 'online' }));
+          resolve();
+        });
+
+        testAudio.addEventListener('error', () => {
+          clearTimeout(timeout);
+          setRadioStatus(prev => ({ ...prev, [station.id]: 'offline' }));
+          resolve();
+        });
+
+        testAudio.load();
+      });
+    } catch (error) {
+      setRadioStatus(prev => ({ ...prev, [station.id]: 'offline' }));
+    }
+  };
+
   // Media player functions
   const toggleRadio = () => {
     if (!currentRadio?.live_url) return;
-    
+
     if (isPlaying) {
       audio.pause();
     } else {
@@ -426,10 +466,21 @@ export default function Index() {
                           <div className="w-12 h-12 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
                             <RadioIcon className="w-6 h-6 text-white" />
                           </div>
-                          <Badge className="bg-green-600 text-white text-xs">
-                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse mr-1"></div>
-                            LIVE
-                          </Badge>
+                          {radioStatus[station.id] === 'checking' ? (
+                            <Badge className="bg-yellow-600 text-white text-xs">
+                              <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                              CHECKING
+                            </Badge>
+                          ) : radioStatus[station.id] === 'offline' ? (
+                            <Badge variant="secondary" className="bg-red-600 text-white text-xs">
+                              OFFLINE
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-green-600 text-white text-xs">
+                              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse mr-1"></div>
+                              LIVE
+                            </Badge>
+                          )}
                         </div>
 
                         <h3 className="font-bold text-white mb-2 truncate">{station.title}</h3>
