@@ -331,8 +331,14 @@ export default function Index() {
         {/* Radio Section */}
         {currentSection === 'radio' && (
           <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-6 text-center">Radio Player</h2>
-            
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl md:text-2xl font-bold">Radio Stations</h2>
+              <Badge variant="secondary" className="bg-green-600 text-white">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></div>
+                LIVE RADIO
+              </Badge>
+            </div>
+
             {loading.radio ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
@@ -341,95 +347,143 @@ export default function Index() {
               <div className="text-center py-8 text-red-400">
                 ❌ {errors.radio}
               </div>
+            ) : radio.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                No radio stations available
+              </div>
             ) : (
-              <div className="max-w-md mx-auto">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-6 text-center">
-                    {/* Album Art */}
-                    <div className="w-32 h-32 mx-auto mb-4 bg-gray-700 rounded-lg flex items-center justify-center">
-                      <RadioIcon className="w-12 h-12 text-orange-600" />
-                    </div>
-                    
-                    {/* Now Playing */}
-                    <h3 className="text-lg font-semibold mb-2">
-                      {currentRadio?.title || 'Select a radio station'}
-                    </h3>
-                    
-                    {/* Waveform Animation */}
-                    {isPlaying && (
-                      <div className="flex justify-center items-end space-x-1 mb-4 h-8">
-                        {[...Array(8)].map((_, i) => (
-                          <div
-                            key={i}
-                            className="w-1 bg-orange-600 rounded animate-pulse"
-                            style={{
-                              height: `${Math.random() * 24 + 8}px`,
-                              animationDelay: `${i * 100}ms`,
-                              animationDuration: '1s'
-                            }}
-                          />
-                        ))}
+              <div className="space-y-6">
+                {/* Currently Playing */}
+                {currentRadio && isPlaying && (
+                  <Card className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border-orange-600/50">
+                    <CardContent className="p-6">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
+                          <RadioIcon className="w-8 h-8 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="text-lg font-bold text-white">Now Playing</h3>
+                            <Badge className="bg-red-600 text-white text-xs">
+                              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse mr-1"></div>
+                              LIVE
+                            </Badge>
+                          </div>
+                          <p className="text-orange-200 font-semibold">{currentRadio.title}</p>
+
+                          {/* Waveform Animation */}
+                          <div className="flex items-end space-x-1 mt-3 h-6">
+                            {[...Array(12)].map((_, i) => (
+                              <div
+                                key={i}
+                                className="w-1 bg-orange-400 rounded animate-pulse"
+                                style={{
+                                  height: `${Math.random() * 20 + 8}px`,
+                                  animationDelay: `${i * 100}ms`,
+                                  animationDuration: '1.2s'
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={toggleRadio}
+                            size="icon"
+                            className="bg-orange-600 hover:bg-orange-700 text-white"
+                          >
+                            <Pause className="w-5 h-5" />
+                          </Button>
+                          <Button
+                            onClick={toggleMute}
+                            variant="outline"
+                            size="icon"
+                            className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
+                          >
+                            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                          </Button>
+                        </div>
                       </div>
-                    )}
-                    
-                    {/* Controls */}
-                    <div className="space-y-3">
-                      <Button
-                        onClick={toggleRadio}
-                        disabled={!currentRadio}
-                        className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3"
-                      >
-                        {isPlaying ? (
-                          <>
-                            <Pause className="w-5 h-5 mr-2" />
-                            Pause
-                          </>
-                        ) : (
-                          <>
-                            <Play className="w-5 h-5 mr-2" />
-                            Play
-                          </>
-                        )}
-                      </Button>
-                      
-                      <div className="flex space-x-2">
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Radio Stations Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {radio.map((station) => (
+                    <Card
+                      key={station.id}
+                      className={`transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer ${
+                        currentRadio?.id === station.id && isPlaying
+                          ? 'bg-gradient-to-br from-orange-600/30 to-red-600/30 border-orange-600/50'
+                          : 'bg-gray-800 border-gray-700 hover:bg-gray-750'
+                      }`}
+                      onClick={() => setCurrentRadio(station)}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
+                            <RadioIcon className="w-6 h-6 text-white" />
+                          </div>
+                          <Badge className="bg-green-600 text-white text-xs">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse mr-1"></div>
+                            LIVE
+                          </Badge>
+                        </div>
+
+                        <h3 className="font-bold text-white mb-2 truncate">{station.title}</h3>
+                        <p className="text-sm text-gray-400 mb-4">Haitian Radio Station</p>
+
                         <Button
-                          onClick={toggleMute}
-                          variant="outline"
-                          className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (currentRadio?.id === station.id) {
+                              toggleRadio();
+                            } else {
+                              setCurrentRadio(station);
+                              if (!isPlaying) {
+                                // Will start playing when currentRadio changes
+                                setTimeout(() => toggleRadio(), 100);
+                              }
+                            }
+                          }}
+                          className={`w-full transition-colors ${
+                            currentRadio?.id === station.id && isPlaying
+                              ? 'bg-red-600 hover:bg-red-700 text-white'
+                              : 'bg-orange-600 hover:bg-orange-700 text-white'
+                          }`}
                         >
-                          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                          {currentRadio?.id === station.id && isPlaying ? (
+                            <>
+                              <Pause className="w-4 h-4 mr-2" />
+                              Playing
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-4 h-4 mr-2" />
+                              Listen Live
+                            </>
+                          )}
                         </Button>
-                        <Button
-                          variant="outline"
-                          className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
-                        >
-                          <Maximize className="w-4 h-4" />
-                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Info Message */}
+                <Card className="bg-blue-600/20 border-blue-600/50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                        <RadioIcon className="w-4 h-4 text-white" />
                       </div>
+                      <p className="text-blue-200 text-sm">
+                        <strong>Coming Soon:</strong> Even more radio stations will be added - more music, more options, more fun. Stay tuned!
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
-                
-                {/* Radio Station List */}
-                {radio.length > 1 && (
-                  <div className="mt-6 space-y-2">
-                    <h4 className="font-semibold text-gray-300 mb-3">Available Stations</h4>
-                    {radio.map((station) => (
-                      <button
-                        key={station.id}
-                        onClick={() => setCurrentRadio(station)}
-                        className={`w-full p-3 rounded-lg text-left transition-colors ${
-                          currentRadio?.id === station.id
-                            ? 'bg-orange-600 text-white'
-                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                        }`}
-                      >
-                        {station.title}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
           </div>
