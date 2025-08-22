@@ -433,7 +433,7 @@ export default function Index() {
                         </div>
 
                         <h3 className="font-bold text-white mb-2 truncate">{station.title}</h3>
-                        <p className="text-sm text-gray-400 mb-4">Haitian Radio Station</p>
+                        <p className="text-sm text-gray-400 mb-4">Radio Station</p>
 
                         <Button
                           onClick={(e) => {
@@ -471,19 +471,6 @@ export default function Index() {
                   ))}
                 </div>
 
-                {/* Info Message */}
-                <Card className="bg-blue-600/20 border-blue-600/50">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                        <RadioIcon className="w-4 h-4 text-white" />
-                      </div>
-                      <p className="text-blue-200 text-sm">
-                        <strong>Coming Soon:</strong> Even more radio stations will be added - more music, more options, more fun. Stay tuned!
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
             )}
           </div>
