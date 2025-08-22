@@ -198,9 +198,21 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title }: 
   );
 }
 
-// Extend Window interface for HLS.js
+// Extend Window interface for HLS.js and cross-browser fullscreen
 declare global {
   interface Window {
     Hls: any;
+  }
+
+  interface HTMLVideoElement {
+    webkitRequestFullscreen?: () => Promise<void>;
+    mozRequestFullScreen?: () => Promise<void>;
+    msRequestFullscreen?: () => Promise<void>;
+  }
+
+  interface Document {
+    webkitExitFullscreen?: () => Promise<void>;
+    mozCancelFullScreen?: () => Promise<void>;
+    msExitFullscreen?: () => Promise<void>;
   }
 }
