@@ -528,15 +528,15 @@ export default function Index() {
                         </div>
                       </div>
 
-                      {/* Business Hours */}
+                      {/* Support */}
                       <div className="bg-gray-700 rounded-lg p-4">
                         <div className="flex items-center justify-center space-x-3">
                           <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
                             <Clock className="w-5 h-5 text-white" />
                           </div>
                           <div className="text-left">
-                            <p className="text-sm text-gray-400">Support Hours</p>
-                            <p className="text-lg font-semibold text-white">24/7 Available</p>
+                            <p className="text-sm text-gray-400">Support</p>
+                            <p className="text-lg font-semibold text-white">We're here to help</p>
                           </div>
                         </div>
                       </div>
