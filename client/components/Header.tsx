@@ -16,6 +16,7 @@ export default function Header({ onSectionChange, currentSection }: HeaderProps)
     { id: 'radio', name: "Radio", icon: Radio },
     { id: 'updates', name: "Updates", icon: Newspaper },
     { id: 'copyright', name: "Copyright Notice", icon: Copyright },
+    { id: 'contact', name: "Contact", icon: Phone },
   ];
 
   const handleSectionClick = (sectionId: string) => {
@@ -51,14 +52,10 @@ export default function Header({ onSectionChange, currentSection }: HeaderProps)
             </div>
           </div>
 
-          {/* Contact Link */}
-          <a 
-            href="mailto:kinglionqr@gmail.com"
-            className="hidden md:flex items-center space-x-2 text-sm text-gray-300 hover:text-white transition-colors"
-          >
-            <Phone className="w-4 h-4" />
-            <span>Contact</span>
-          </a>
+          {/* Menu indicator for desktop */}
+          <div className="hidden md:block text-sm text-gray-300">
+            Menu
+          </div>
         </div>
       </header>
 
@@ -101,14 +98,6 @@ export default function Header({ onSectionChange, currentSection }: HeaderProps)
             );
           })}
           
-          {/* Contact Link for Mobile */}
-          <a
-            href="mailto:kinglionqr@gmail.com"
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-          >
-            <Phone className="w-5 h-5" />
-            <span className="font-medium">Contact</span>
-          </a>
         </nav>
       </div>
 

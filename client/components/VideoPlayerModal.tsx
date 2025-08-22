@@ -75,9 +75,23 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title }: 
   const toggleFullscreen = () => {
     if (videoRef.current) {
       if (!document.fullscreenElement) {
-        videoRef.current.requestFullscreen?.();
+        // Try different fullscreen methods for cross-browser compatibility
+        const requestFullscreen = videoRef.current.requestFullscreen ||
+                                 videoRef.current.webkitRequestFullscreen ||
+                                 videoRef.current.mozRequestFullScreen ||
+                                 videoRef.current.msRequestFullscreen;
+        if (requestFullscreen) {
+          requestFullscreen.call(videoRef.current);
+        }
       } else {
-        document.exitFullscreen?.();
+        // Try different exit fullscreen methods for cross-browser compatibility
+        const exitFullscreen = document.exitFullscreen ||
+                               document.webkitExitFullscreen ||
+                               document.mozCancelFullScreen ||
+                               document.msExitFullscreen;
+        if (exitFullscreen) {
+          exitFullscreen.call(document);
+        }
       }
     }
   };
