@@ -12,32 +12,34 @@ export default function Header() {
     { name: "Radio", href: "#radio", icon: Radio },
     { name: "Updates", href: "#updates", icon: Newspaper },
     { name: "Copyright Notice", href: "#copyright", icon: Copyright },
-    { name: "Contact", href: "#contact", icon: Phone },
+    { name: "Contact", href: "mailto:kinglionqr@gmail.com", icon: Phone },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full bg-black border-b border-gray-800">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center space-x-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-            <Play className="w-6 h-6 text-black fill-current" />
-          </div>
+        {/* Logo - Mobile First */}
+        <div className="flex items-center space-x-3">
+          <img 
+            src="https://i.ibb.co/CsB7SJp0/best.png" 
+            alt="LQR SPORT" 
+            className="w-8 h-8 md:w-10 md:h-10 object-contain"
+          />
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold text-foreground">LQR SPORT</h1>
-            <p className="text-xs text-muted-foreground">Haitian Media Hub</p>
+            <h1 className="text-lg md:text-xl font-bold text-white">LQR SPORT</h1>
+            <p className="text-xs text-gray-400 hidden sm:block">Haitian Media Hub</p>
           </div>
         </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
+        {/* Desktop Navigation - Hidden on mobile */}
+        <nav className="hidden lg:flex items-center space-x-6">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             return (
               <a
                 key={item.name}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center space-x-1"
+                className="text-sm font-medium text-gray-300 hover:text-white transition-colors flex items-center space-x-1"
               >
                 <Icon className="w-4 h-4" />
                 <span>{item.name}</span>
@@ -48,21 +50,23 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
+          <SheetTrigger asChild className="lg:hidden">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-gray-800">
               <Menu className="h-6 w-6" />
               <span className="sr-only">Toggle menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-            <div className="flex flex-col space-y-4 mt-6">
-              <div className="flex items-center space-x-2 pb-4 border-b">
-                <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-                  <Play className="w-5 h-5 text-black fill-current" />
-                </div>
+          <SheetContent side="right" className="w-[280px] bg-gray-900 border-gray-800">
+            <div className="flex flex-col space-y-1 mt-6">
+              <div className="flex items-center space-x-3 pb-4 border-b border-gray-800">
+                <img 
+                  src="https://i.ibb.co/CsB7SJp0/best.png" 
+                  alt="LQR SPORT" 
+                  className="w-8 h-8 object-contain"
+                />
                 <div>
-                  <h2 className="font-bold">LQR SPORT</h2>
-                  <p className="text-xs text-muted-foreground">Haitian Media Hub</p>
+                  <h2 className="font-bold text-white">LQR SPORT</h2>
+                  <p className="text-xs text-gray-400">Haitian Media Hub</p>
                 </div>
               </div>
               {navigationItems.map((item) => {
@@ -72,7 +76,7 @@ export default function Header() {
                     key={item.name}
                     href={item.href}
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center space-x-3 text-sm font-medium hover:text-primary transition-colors py-2"
+                    className="flex items-center space-x-3 text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 transition-colors py-3 px-2 rounded-md"
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.name}</span>
