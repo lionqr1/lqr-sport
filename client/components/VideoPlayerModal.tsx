@@ -72,26 +72,44 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title }: 
     }
   };
 
+  const [isInIframe, setIsInIframe] = useState(false);
+  const [isCustomFullscreen, setIsCustomFullscreen] = useState(false);
+
+  useEffect(() => {
+    // Check if we're in an iframe
+    setIsInIframe(window !== window.parent);
+  }, []);
+
   const toggleFullscreen = () => {
-    if (videoRef.current) {
-      if (!document.fullscreenElement) {
-        // Try different fullscreen methods for cross-browser compatibility
-        const requestFullscreen = videoRef.current.requestFullscreen ||
-                                 videoRef.current.webkitRequestFullscreen ||
-                                 videoRef.current.mozRequestFullScreen ||
-                                 videoRef.current.msRequestFullscreen;
-        if (requestFullscreen) {
-          requestFullscreen.call(videoRef.current);
-        }
+    if (!videoRef.current) return;
+
+    // If we're in an iframe or mobile, use custom fullscreen
+    if (isInIframe || /Mobi|Android/i.test(navigator.userAgent)) {
+      setIsCustomFullscreen(!isCustomFullscreen);
+      return;
+    }
+
+    // Try native fullscreen for desktop browsers
+    if (!document.fullscreenElement) {
+      const requestFullscreen = videoRef.current.requestFullscreen ||
+                               videoRef.current.webkitRequestFullscreen ||
+                               videoRef.current.mozRequestFullScreen ||
+                               videoRef.current.msRequestFullscreen;
+      if (requestFullscreen) {
+        requestFullscreen.call(videoRef.current).catch(() => {
+          // Fallback to custom fullscreen if native fails
+          setIsCustomFullscreen(true);
+        });
       } else {
-        // Try different exit fullscreen methods for cross-browser compatibility
-        const exitFullscreen = document.exitFullscreen ||
-                               document.webkitExitFullscreen ||
-                               document.mozCancelFullScreen ||
-                               document.msExitFullscreen;
-        if (exitFullscreen) {
-          exitFullscreen.call(document);
-        }
+        setIsCustomFullscreen(true);
+      }
+    } else {
+      const exitFullscreen = document.exitFullscreen ||
+                             document.webkitExitFullscreen ||
+                             document.mozCancelFullScreen ||
+                             document.msExitFullscreen;
+      if (exitFullscreen) {
+        exitFullscreen.call(document);
       }
     }
   };
@@ -109,10 +127,16 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title }: 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black bg-opacity-95 flex flex-col items-center justify-center p-4">
+    <div className={`fixed inset-0 bg-black flex flex-col items-center justify-center ${
+      isCustomFullscreen ? 'z-[99999] p-0' : 'z-[9999] bg-opacity-95 p-4'
+    }`}>
       {/* Video Player */}
-      <div className="w-full max-w-4xl flex flex-col">
-        <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4">
+      <div className={`flex flex-col ${
+        isCustomFullscreen ? 'w-full h-full' : 'w-full max-w-4xl'
+      }`}>
+        <div className={`relative bg-black overflow-hidden ${
+          isCustomFullscreen ? 'flex-1' : 'aspect-video rounded-lg mb-4'
+        }`}>
           <video
             ref={videoRef}
             className="w-full h-full object-contain"
@@ -148,7 +172,9 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title }: 
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-between bg-gray-800 rounded-lg p-4">
+        <div className={`flex items-center justify-between bg-gray-800 p-4 ${
+          isCustomFullscreen ? 'absolute bottom-0 left-0 right-0 z-10' : 'rounded-lg'
+        }`}>
           {/* Left Controls */}
           <div className="flex items-center space-x-2">
             <Button
@@ -158,7 +184,7 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title }: 
             >
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </Button>
-            
+
             <Button
               onClick={toggleMute}
               variant="ghost"
@@ -183,16 +209,28 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title }: 
         </div>
 
         {/* Back Button */}
-        <div className="mt-4 text-center">
-          <Button
-            onClick={handleClose}
-            variant="outline"
-            className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+        {!isCustomFullscreen && (
+          <div className="mt-4 text-center">
+            <Button
+              onClick={handleClose}
+              variant="outline"
+              className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Channels
+            </Button>
+          </div>
+        )}
+
+        {/* Custom Fullscreen Exit Button */}
+        {isCustomFullscreen && (
+          <button
+            onClick={() => setIsCustomFullscreen(false)}
+            className="absolute top-4 right-4 z-20 w-12 h-12 bg-black bg-opacity-75 hover:bg-opacity-100 text-white rounded-full flex items-center justify-center transition-all"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Channels
-          </Button>
-        </div>
+            <X className="w-6 h-6" />
+          </button>
+        )}
       </div>
     </div>
   );
