@@ -1,20 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import VideoPlayerModal from "@/components/VideoPlayerModal";
+import LoadingScreen from "@/components/LoadingScreen";
 import { supabase, type Channel, type LiveTV, type Radio, type Update } from "@/lib/supabase";
 import { 
   Play, 
   Radio as RadioIcon, 
   Users, 
-  Clock, 
+  Clock,
   Pause,
   Volume2,
   VolumeX,
   Loader2,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 
 export default function TV() {
@@ -33,22 +35,46 @@ export default function TV() {
     updates: false
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  // Video Player Modal states
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  // Navigation states for Fire TV
+  const [focusedItem, setFocusedItem] = useState(0);
+  const [focusedNav, setFocusedNav] = useState(0);
+  const [isNavFocused, setIsNavFocused] = useState(true);
+  
+  // Video player states
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentStreamUrl, setCurrentStreamUrl] = useState('');
   const [currentStreamTitle, setCurrentStreamTitle] = useState('');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Media player states
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isRadioPlaying, setIsRadioPlaying] = useState(false);
   const [currentRadio, setCurrentRadio] = useState<Radio | null>(null);
   const [audio] = useState(new Audio());
-  const [isMuted, setIsMuted] = useState(false);
 
-  // TV-specific states
-  const [focusedIndex, setFocusedIndex] = useState(0);
+  // Navigation items
+  const navItems = [
+    { id: 'streams', label: 'Haitian Streams', icon: Play },
+    { id: 'channels', label: 'TV Channels', icon: Users },
+    { id: 'radio', label: 'Radio Stations', icon: RadioIcon },
+    { id: 'updates', label: 'Latest Updates', icon: Clock }
+  ];
 
-  // Fetch functions (same as mobile)
+  // Get current items based on section
+  const getCurrentItems = () => {
+    switch (currentSection) {
+      case 'streams': return liveTV;
+      case 'channels': return channels;
+      case 'radio': return radio;
+      case 'updates': return updates;
+      default: return [];
+    }
+  };
+
+  // Fetch functions
   const fetchChannels = async () => {
     setLoading(prev => ({ ...prev, channels: true }));
     try {
@@ -124,36 +150,64 @@ export default function TV() {
     }
   };
 
-  // Media player functions
+  // Video player functions
+  const playStream = async (url: string, title: string) => {
+    setCurrentStreamUrl(url);
+    setCurrentStreamTitle(title);
+    setIsFullscreen(true);
+    
+    if (videoRef.current) {
+      videoRef.current.src = url;
+      try {
+        await videoRef.current.play();
+        setIsPlaying(true);
+      } catch (error) {
+        console.error('Error playing video:', error);
+      }
+    }
+  };
+
+  const exitFullscreen = () => {
+    setIsFullscreen(false);
+    setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.src = '';
+    }
+  };
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  // Radio functions
   const toggleRadio = () => {
     if (!currentRadio?.live_url) return;
     
-    if (isPlaying) {
+    if (isRadioPlaying) {
       audio.pause();
     } else {
       audio.src = currentRadio.live_url;
       audio.play();
     }
-    setIsPlaying(!isPlaying);
+    setIsRadioPlaying(!isRadioPlaying);
   };
 
-  const toggleMute = () => {
-    audio.muted = !audio.muted;
-    setIsMuted(!isMuted);
-  };
-
-  const openVideoPlayer = (url: string, title: string) => {
-    setCurrentStreamUrl(url);
-    setCurrentStreamTitle(title);
-    setIsVideoModalOpen(true);
-  };
-
-  const closeVideoPlayer = () => {
-    setIsVideoModalOpen(false);
-    setCurrentStreamUrl('');
-    setCurrentStreamTitle('');
-  };
-
+  // Format date function
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -165,334 +219,377 @@ export default function TV() {
     return `${Math.floor(diffInHours / 24)} days ago`;
   };
 
+  // Fire TV Remote Navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      event.preventDefault();
+      
+      if (isFullscreen) {
+        // Fullscreen controls
+        if (event.key === 'ArrowUp' || event.key === 'Escape' || event.key === 'Backspace') {
+          exitFullscreen();
+        } else if (event.key === 'Enter' || event.key === ' ') {
+          togglePlay();
+        } else if (event.key === 'm' || event.key === 'M') {
+          toggleMute();
+        }
+        return;
+      }
+
+      const currentItems = getCurrentItems();
+      
+      if (isNavFocused) {
+        // Navigation controls
+        if (event.key === 'ArrowLeft') {
+          setFocusedNav(prev => Math.max(0, prev - 1));
+        } else if (event.key === 'ArrowRight') {
+          setFocusedNav(prev => Math.min(navItems.length - 1, prev + 1));
+        } else if (event.key === 'ArrowDown') {
+          setIsNavFocused(false);
+          setFocusedItem(0);
+        } else if (event.key === 'Enter') {
+          setCurrentSection(navItems[focusedNav].id);
+          setFocusedItem(0);
+        }
+      } else {
+        // Content controls
+        if (event.key === 'ArrowUp') {
+          setIsNavFocused(true);
+        } else if (event.key === 'ArrowLeft') {
+          setFocusedItem(prev => Math.max(0, prev - 1));
+        } else if (event.key === 'ArrowRight') {
+          setFocusedItem(prev => Math.min(currentItems.length - 1, prev + 1));
+        } else if (event.key === 'ArrowDown') {
+          const itemsPerRow = 4;
+          const nextRow = focusedItem + itemsPerRow;
+          if (nextRow < currentItems.length) {
+            setFocusedItem(nextRow);
+          }
+        } else if (event.key === 'ArrowUp') {
+          const itemsPerRow = 4;
+          const prevRow = focusedItem - itemsPerRow;
+          if (prevRow >= 0) {
+            setFocusedItem(prevRow);
+          } else {
+            setIsNavFocused(true);
+          }
+        } else if (event.key === 'Enter') {
+          const item = currentItems[focusedItem];
+          if (item) {
+            if (currentSection === 'radio') {
+              setCurrentRadio(item as Radio);
+              toggleRadio();
+            } else {
+              const url = (item as Channel).stream_url || (item as LiveTV).stream_url;
+              const name = (item as Channel).name || (item as LiveTV).name;
+              if (url) {
+                playStream(url, name);
+              }
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isNavFocused, focusedNav, focusedItem, currentSection, isFullscreen, getCurrentItems]);
+
   // Load data on mount
   useEffect(() => {
-    fetchChannels();
-    fetchLiveTV();
-    fetchRadio();
-    fetchUpdates();
+    const loadData = async () => {
+      setIsInitialLoading(true);
+      await Promise.all([
+        fetchChannels(),
+        fetchLiveTV(),
+        fetchRadio(),
+        fetchUpdates()
+      ]);
+      setIsInitialLoading(false);
+    };
+    
+    loadData();
   }, []);
 
-  // Audio event listeners
-  useEffect(() => {
-    const handleAudioEnd = () => setIsPlaying(false);
-    const handleAudioError = () => setIsPlaying(false);
-    
-    audio.addEventListener('ended', handleAudioEnd);
-    audio.addEventListener('error', handleAudioError);
-    
-    return () => {
-      audio.removeEventListener('ended', handleAudioEnd);
-      audio.removeEventListener('error', handleAudioError);
-    };
-  }, [audio]);
+  if (isInitialLoading) {
+    return <LoadingScreen isLoading={true} text="Loading LQR SPORT TV" />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* TV Header */}
-      <header className="bg-black border-b border-gray-800 p-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <img 
-              src="https://i.ibb.co/CsB7SJp0/best.png" 
-              alt="LQR SPORT" 
-              className="w-16 h-16 object-contain"
-            />
-            <div>
-              <h1 className="text-3xl font-bold text-white">LQR SPORT</h1>
-              <p className="text-lg text-gray-400">Haitian Media Hub - TV Version</p>
+      {/* Fullscreen Video Player */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-[99999] bg-black">
+          <video
+            ref={videoRef}
+            className="w-full h-full object-contain"
+            autoPlay
+            playsInline
+            controls={false}
+          />
+          
+          {/* Fullscreen Controls Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <h3 className="text-2xl font-bold text-white">{currentStreamTitle}</h3>
+                <Badge className="bg-red-600 text-white text-lg px-4 py-2">
+                  <div className="w-3 h-3 bg-white rounded-full animate-pulse mr-2"></div>
+                  LIVE
+                </Badge>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <Button
+                  onClick={togglePlay}
+                  size="icon"
+                  className="w-16 h-16 bg-orange-600 hover:bg-orange-700 text-white"
+                >
+                  {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
+                </Button>
+                
+                <Button
+                  onClick={toggleMute}
+                  variant="ghost"
+                  size="icon"
+                  className="w-16 h-16 text-white hover:bg-gray-700"
+                >
+                  {isMuted ? <VolumeX className="w-8 h-8" /> : <Volume2 className="w-8 h-8" />}
+                </Button>
+              </div>
+            </div>
+            
+            <div className="mt-4 text-center">
+              <p className="text-gray-300 text-lg">Press ↑ to exit • Enter to play/pause • M to mute</p>
             </div>
           </div>
-          
-          <Badge variant="secondary" className="bg-red-600 text-white text-lg px-4 py-2">
-            <div className="w-3 h-3 bg-white rounded-full animate-pulse mr-2"></div>
-            LIVE TV
-          </Badge>
         </div>
-      </header>
+      )}
 
-      {/* TV Navigation */}
-      <nav className="bg-gray-800 border-b border-gray-700 p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-center space-x-6">
-            {[
-              { id: 'streams', label: 'Haitian Streams', icon: Play },
-              { id: 'channels', label: 'TV Channels', icon: Users },
-              { id: 'radio', label: 'Radio Stations', icon: RadioIcon },
-              { id: 'updates', label: 'Latest Updates', icon: Clock }
-            ].map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => setCurrentSection(id)}
-                className={`flex items-center space-x-3 px-8 py-4 rounded-xl text-lg font-bold transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-orange-600 ${
-                  currentSection === id 
-                    ? 'bg-orange-600 text-white scale-110' 
-                    : 'text-gray-300 hover:text-white hover:bg-gray-700 hover:scale-105'
-                }`}
-              >
-                <Icon className="w-6 h-6" />
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto p-6">
-        {/* Streams Section */}
-        {currentSection === 'streams' && (
-          <div>
-            <h2 className="text-4xl font-bold mb-8 text-center">Haitian Streams</h2>
-            
-            {loading.liveTV ? (
-              <div className="flex justify-center py-16">
-                <Loader2 className="w-16 h-16 animate-spin text-orange-600" />
-              </div>
-            ) : errors.liveTV ? (
-              <div className="text-center py-16 text-red-400 text-2xl">
-                ❌ {errors.liveTV}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {liveTV.map((stream, index) => (
-                  <Card 
-                    key={stream.id} 
-                    className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-all duration-300 hover:scale-105 focus-within:ring-4 focus-within:ring-orange-600"
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-center space-x-4 mb-6">
-                        {stream.logo_url && (
-                          <img 
-                            src={stream.logo_url} 
-                            alt={stream.name}
-                            className="w-16 h-16 object-contain rounded"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-white text-xl truncate">{stream.name}</h3>
-                          <p className="text-gray-400 text-lg">Live Stream</p>
-                        </div>
-                      </div>
-                      <Button 
-                        onClick={() => openVideoPlayer(stream.stream_url, stream.name)}
-                        className="w-full bg-orange-600 hover:bg-orange-700 text-white text-xl py-4 focus:ring-4 focus:ring-orange-300"
-                      >
-                        <Play className="w-6 h-6 mr-3" />
-                        Watch Now
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Channels Section */}
-        {currentSection === 'channels' && (
-          <div>
-            <h2 className="text-4xl font-bold mb-8 text-center">TV Channels</h2>
-            
-            {loading.channels ? (
-              <div className="flex justify-center py-16">
-                <Loader2 className="w-16 h-16 animate-spin text-orange-600" />
-              </div>
-            ) : errors.channels ? (
-              <div className="text-center py-16 text-red-400 text-2xl">
-                ❌ {errors.channels}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {channels.map((channel) => (
-                  <Card key={channel.id} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-all duration-300 hover:scale-105 focus-within:ring-4 focus-within:ring-orange-600">
-                    <CardContent className="p-6">
-                      <div className="flex items-center space-x-4 mb-6">
-                        {channel.logo_url && (
-                          <img 
-                            src={channel.logo_url} 
-                            alt={channel.name}
-                            className="w-16 h-16 object-contain rounded"
-                          />
-                        )}
-                        <h3 className="font-bold text-white text-xl">{channel.name}</h3>
-                      </div>
-                      <Button 
-                        onClick={() => openVideoPlayer(channel.stream_url, channel.name)}
-                        className="w-full bg-orange-600 hover:bg-orange-700 text-white text-xl py-4 focus:ring-4 focus:ring-orange-300"
-                      >
-                        <Play className="w-6 h-6 mr-3" />
-                        Watch
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Radio Section */}
-        {currentSection === 'radio' && (
-          <div>
-            <h2 className="text-4xl font-bold mb-8 text-center">Radio Stations</h2>
-            
-            {loading.radio ? (
-              <div className="flex justify-center py-16">
-                <Loader2 className="w-16 h-16 animate-spin text-orange-600" />
-              </div>
-            ) : errors.radio ? (
-              <div className="text-center py-16 text-red-400 text-2xl">
-                ❌ {errors.radio}
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {/* Currently Playing */}
-                {currentRadio && isPlaying && (
-                  <Card className="bg-gradient-to-r from-orange-600/30 to-red-600/30 border-orange-600/50 p-8">
-                    <CardContent className="p-0">
-                      <div className="flex items-center space-x-6">
-                        <div className="w-24 h-24 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
-                          <RadioIcon className="w-12 h-12 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-2xl font-bold text-white mb-2">Now Playing</h3>
-                          <p className="text-orange-200 font-semibold text-xl">{currentRadio.title}</p>
-                        </div>
-                        
-                        <div className="flex space-x-4">
-                          <Button
-                            onClick={toggleRadio}
-                            size="icon"
-                            className="w-16 h-16 bg-orange-600 hover:bg-orange-700 text-white focus:ring-4 focus:ring-orange-300"
-                          >
-                            <Pause className="w-8 h-8" />
-                          </Button>
-                          <Button
-                            onClick={toggleMute}
-                            variant="outline"
-                            size="icon"
-                            className="w-16 h-16 border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white focus:ring-4 focus:ring-orange-300"
-                          >
-                            {isMuted ? <VolumeX className="w-8 h-8" /> : <Volume2 className="w-8 h-8" />}
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Radio Stations Grid */}
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {radio.map((station) => (
-                    <Card 
-                      key={station.id} 
-                      className={`transition-all duration-300 hover:scale-105 cursor-pointer focus-within:ring-4 focus-within:ring-orange-600 ${
-                        currentRadio?.id === station.id && isPlaying
-                          ? 'bg-gradient-to-br from-orange-600/30 to-red-600/30 border-orange-600/50'
-                          : 'bg-gray-800 border-gray-700 hover:bg-gray-750'
-                      }`}
-                      onClick={() => setCurrentRadio(station)}
-                    >
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-6">
-                          <div className="w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
-                            <RadioIcon className="w-8 h-8 text-white" />
-                          </div>
-                          <Badge className="bg-green-600 text-white text-lg px-3 py-1">
-                            <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></div>
-                            LIVE
-                          </Badge>
-                        </div>
-                        
-                        <h3 className="font-bold text-white mb-2 text-xl truncate">{station.title}</h3>
-                        <p className="text-gray-400 mb-6 text-lg">Radio Station</p>
-                        
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (currentRadio?.id === station.id) {
-                              toggleRadio();
-                            } else {
-                              setCurrentRadio(station);
-                              if (!isPlaying) {
-                                setTimeout(() => toggleRadio(), 100);
-                              }
-                            }
-                          }}
-                          className={`w-full text-xl py-4 transition-colors focus:ring-4 focus:ring-orange-300 ${
-                            currentRadio?.id === station.id && isPlaying
-                              ? 'bg-red-600 hover:bg-red-700 text-white'
-                              : 'bg-orange-600 hover:bg-orange-700 text-white'
-                          }`}
-                        >
-                          {currentRadio?.id === station.id && isPlaying ? (
-                            <>
-                              <Pause className="w-6 h-6 mr-3" />
-                              Playing
-                            </>
-                          ) : (
-                            <>
-                              <Play className="w-6 h-6 mr-3" />
-                              Listen Live
-                            </>
-                          )}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
+      {/* Main TV Interface */}
+      {!isFullscreen && (
+        <>
+          {/* TV Header */}
+          <header className="bg-black border-b border-gray-800 p-4">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <img 
+                  src="https://i.ibb.co/CsB7SJp0/best.png" 
+                  alt="LQR SPORT" 
+                  className="w-12 h-12 object-contain"
+                />
+                <div>
+                  <h1 className="text-2xl font-bold text-white">LQR SPORT</h1>
+                  <p className="text-sm text-gray-400">Fire TV • Use remote to navigate</p>
                 </div>
               </div>
-            )}
-          </div>
-        )}
+              
+              <Badge variant="secondary" className="bg-red-600 text-white text-base px-3 py-2">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></div>
+                LIVE TV
+              </Badge>
+            </div>
+          </header>
 
-        {/* Updates Section */}
-        {currentSection === 'updates' && (
-          <div>
-            <h2 className="text-4xl font-bold mb-8 text-center">Latest Updates</h2>
-            
-            {loading.updates ? (
-              <div className="flex justify-center py-16">
-                <Loader2 className="w-16 h-16 animate-spin text-orange-600" />
+          {/* TV Navigation */}
+          <nav className="bg-gray-800 border-b border-gray-700 p-4">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex justify-center space-x-4">
+                {navItems.map((item, index) => {
+                  const Icon = item.icon;
+                  const isFocused = isNavFocused && focusedNav === index;
+                  const isActive = currentSection === item.id;
+                  
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setCurrentSection(item.id);
+                        setFocusedItem(0);
+                      }}
+                      className={`flex items-center space-x-3 px-6 py-3 rounded-xl text-base font-bold transition-all duration-300 ${
+                        isFocused 
+                          ? 'bg-white text-black scale-110 ring-4 ring-orange-600' 
+                          : isActive
+                          ? 'bg-orange-600 text-white scale-105'
+                          : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-            ) : errors.updates ? (
-              <div className="text-center py-16 text-red-400 text-2xl">
-                ❌ {errors.updates}
-              </div>
-            ) : updates.length === 0 ? (
-              <div className="text-center py-16 text-gray-400 text-2xl">
-                No updates available
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {updates.map((update) => (
-                  <Card key={update.id} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-all duration-300">
-                    <CardContent className="p-8">
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="font-bold text-yellow-400 text-2xl">
-                          {update.title}
-                        </h3>
-                        <span className="text-gray-400 text-lg">
-                          {formatDate(update.created_at)}
-                        </span>
-                      </div>
-                      <p className="text-gray-300 text-xl leading-relaxed">{update.message}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </main>
+            </div>
+          </nav>
 
-      {/* Video Player Modal */}
-      <VideoPlayerModal
-        isOpen={isVideoModalOpen}
-        onClose={closeVideoPlayer}
-        streamUrl={currentStreamUrl}
-        title={currentStreamTitle}
-      />
+          <main className="max-w-7xl mx-auto p-6">
+            {/* Content Grid */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-3xl font-bold">
+                  {navItems.find(item => item.id === currentSection)?.label}
+                </h2>
+                <p className="text-gray-400 text-lg">Use arrow keys to navigate • Enter to select</p>
+              </div>
+              
+              {loading[currentSection] ? (
+                <div className="flex justify-center py-16">
+                  <Loader2 className="w-16 h-16 animate-spin text-orange-600" />
+                </div>
+              ) : errors[currentSection] ? (
+                <div className="text-center py-16 text-red-400 text-2xl">
+                  ❌ {errors[currentSection]}
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-6">
+                  {getCurrentItems().map((item, index) => {
+                    const isFocused = !isNavFocused && focusedItem === index;
+                    
+                    if (currentSection === 'updates') {
+                      const update = item as Update;
+                      return (
+                        <Card 
+                          key={update.id}
+                          className={`col-span-2 transition-all duration-300 ${
+                            isFocused 
+                              ? 'bg-orange-600 text-white scale-105 ring-4 ring-white'
+                              : 'bg-gray-800 border-gray-700 hover:bg-gray-750'
+                          }`}
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                              <h3 className={`font-bold text-xl ${
+                                isFocused ? 'text-white' : 'text-yellow-400'
+                              }`}>
+                                {update.title}
+                              </h3>
+                              <span className={`text-sm ${
+                                isFocused ? 'text-orange-200' : 'text-gray-400'
+                              }`}>
+                                {formatDate(update.created_at)}
+                              </span>
+                            </div>
+                            <p className={`text-base leading-relaxed ${
+                              isFocused ? 'text-orange-100' : 'text-gray-300'
+                            }`}>
+                              {update.message}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+
+                    if (currentSection === 'radio') {
+                      const station = item as Radio;
+                      return (
+                        <Card 
+                          key={station.id}
+                          className={`transition-all duration-300 cursor-pointer ${
+                            isFocused 
+                              ? 'bg-orange-600 text-white scale-110 ring-4 ring-white'
+                              : currentRadio?.id === station.id && isRadioPlaying
+                              ? 'bg-gradient-to-br from-orange-600/30 to-red-600/30 border-orange-600/50'
+                              : 'bg-gray-800 border-gray-700 hover:bg-gray-750'
+                          }`}
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="w-12 h-12 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
+                                <RadioIcon className="w-6 h-6 text-white" />
+                              </div>
+                              <Badge className="bg-green-600 text-white">
+                                <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-1"></div>
+                                LIVE
+                              </Badge>
+                            </div>
+                            
+                            <h3 className="font-bold text-white mb-2 text-lg truncate">{station.title}</h3>
+                            <p className={`text-sm mb-4 ${
+                              isFocused ? 'text-orange-200' : 'text-gray-400'
+                            }`}>
+                              Radio Station
+                            </p>
+                            
+                            <div className={`text-sm font-medium ${
+                              currentRadio?.id === station.id && isRadioPlaying ? 'text-orange-300' : 'text-gray-500'
+                            }`}>
+                              {currentRadio?.id === station.id && isRadioPlaying ? 'Playing' : 'Press Enter to play'}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+
+                    // Streams and Channels
+                    const stream = item as LiveTV | Channel;
+                    return (
+                      <Card 
+                        key={stream.id}
+                        className={`transition-all duration-300 cursor-pointer ${
+                          isFocused 
+                            ? 'bg-orange-600 text-white scale-110 ring-4 ring-white'
+                            : 'bg-gray-800 border-gray-700 hover:bg-gray-750'
+                        }`}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-center space-x-3 mb-4">
+                            {stream.logo_url && (
+                              <img 
+                                src={stream.logo_url} 
+                                alt={stream.name}
+                                className="w-12 h-12 object-contain rounded"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-white text-lg truncate">{stream.name}</h3>
+                              <p className={`text-sm ${
+                                isFocused ? 'text-orange-200' : 'text-gray-400'
+                              }`}>
+                                {currentSection === 'streams' ? 'Live Stream' : 'TV Channel'}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <Badge className="bg-red-600 text-white">LIVE</Badge>
+                            <div className={`text-sm font-medium ${
+                              isFocused ? 'text-orange-200' : 'text-gray-500'
+                            }`}>
+                              Press Enter to watch
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Contact Section */}
+            <div className="mt-16 pt-8 border-t border-gray-800">
+              <div className="text-center space-y-4">
+                <div className="flex items-center justify-center space-x-4">
+                  <img 
+                    src="https://i.ibb.co/CsB7SJp0/best.png" 
+                    alt="LQR SPORT" 
+                    className="w-8 h-8 object-contain"
+                  />
+                  <div>
+                    <h3 className="font-bold text-white">LQR SPORT</h3>
+                    <p className="text-sm text-gray-400">Contact: mail.lqrsport@dr.com</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  LQR SPORT WAS CREATED 1 day ago
+                </p>
+              </div>
+            </div>
+          </main>
+        </>
+      )}
     </div>
   );
 }
