@@ -655,6 +655,12 @@ export default function Index() {
                         Get in touch with us for any questions, feedback, or support regarding our Haitian streaming services.
                         We're here to help you enjoy the best of Haitian media content.
                       </p>
+
+                      <div className="mt-6 pt-4 border-t border-gray-700">
+                        <p className="text-xs text-gray-500 text-center">
+                          LQR SPORT WAS CREATED 1 day ago
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

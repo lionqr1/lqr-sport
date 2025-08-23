@@ -689,9 +689,15 @@ export default function Desktop() {
                     <div className="pt-4 border-t border-gray-600">
                       <h4 className="font-semibold text-white mb-2">Copyright Disclaimer</h4>
                       <p className="text-sm text-gray-400">
-                        All channels featured on LQR SPORT are publicly available from the internet. 
+                        All channels featured on LQR SPORT are publicly available from the internet.
                         We do not host, own, or claim any rights over the content displayed.
                       </p>
+
+                      <div className="mt-4 pt-4 border-t border-gray-700">
+                        <p className="text-xs text-gray-500 text-center">
+                          LQR SPORT WAS CREATED 1 day ago
+                        </p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

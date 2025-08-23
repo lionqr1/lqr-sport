@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import LoadingScreen from "@/components/LoadingScreen";
+import VideoPlayerModal from "@/components/VideoPlayerModal";
 import { supabase, type Channel, type LiveTV, type Radio, type Update } from "@/lib/supabase";
 import { 
   Play, 
