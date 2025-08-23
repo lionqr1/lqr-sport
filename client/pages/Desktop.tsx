@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VideoPlayerModal from "@/components/VideoPlayerModal";
+import LoadingScreen from "@/components/LoadingScreen";
 import { supabase, type Channel, type LiveTV, type Radio, type Update } from "@/lib/supabase";
 import { 
   Play, 
@@ -40,6 +41,7 @@ export default function Desktop() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [radioStatus, setRadioStatus] = useState<Record<number, 'online' | 'offline' | 'checking'>>({});
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Video Player Modal states
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -216,10 +218,18 @@ export default function Desktop() {
 
   // Load data on mount
   useEffect(() => {
-    fetchChannels();
-    fetchLiveTV();
-    fetchRadio();
-    fetchUpdates();
+    const loadData = async () => {
+      setIsInitialLoading(true);
+      await Promise.all([
+        fetchChannels(),
+        fetchLiveTV(),
+        fetchRadio(),
+        fetchUpdates()
+      ]);
+      setIsInitialLoading(false);
+    };
+
+    loadData();
   }, []);
 
   // Audio event listeners
@@ -235,6 +245,10 @@ export default function Desktop() {
       audio.removeEventListener('error', handleAudioError);
     };
   }, [audio]);
+
+  if (isInitialLoading) {
+    return <LoadingScreen isLoading={true} text="Loading LQR SPORT Desktop" />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">

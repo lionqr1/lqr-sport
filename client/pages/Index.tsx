@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
 import VideoPlayerModal from "@/components/VideoPlayerModal";
+import LoadingScreen from "@/components/LoadingScreen";
 import { supabase, type Channel, type LiveTV, type Radio, type Update } from "@/lib/supabase";
 import { 
   Play, 
@@ -50,6 +51,7 @@ export default function Index() {
   const [audio] = useState(new Audio());
   const [isMuted, setIsMuted] = useState(false);
   const [radioStatus, setRadioStatus] = useState<Record<number, 'online' | 'offline' | 'checking'>>({});
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Fetch functions
   const fetchChannels = async () => {
@@ -220,10 +222,18 @@ export default function Index() {
 
   // Load data on mount
   useEffect(() => {
-    fetchChannels();
-    fetchLiveTV();
-    fetchRadio();
-    fetchUpdates();
+    const loadData = async () => {
+      setIsInitialLoading(true);
+      await Promise.all([
+        fetchChannels(),
+        fetchLiveTV(),
+        fetchRadio(),
+        fetchUpdates()
+      ]);
+      setIsInitialLoading(false);
+    };
+
+    loadData();
   }, []);
 
   // Audio event listeners
@@ -239,6 +249,10 @@ export default function Index() {
       audio.removeEventListener('error', handleAudioError);
     };
   }, [audio]);
+
+  if (isInitialLoading) {
+    return <LoadingScreen isLoading={true} text="Loading LQR SPORT" />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
