@@ -15,9 +15,10 @@ interface VideoPlayerModalProps {
   onClose: () => void;
   streamUrl: string;
   title: string;
+  platform?: 'mobile' | 'desktop' | 'tv';
 }
 
-export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title }: VideoPlayerModalProps) {
+export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, platform = 'mobile' }: VideoPlayerModalProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,17 +133,22 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title }: 
     }`}>
       {/* Video Player */}
       <div className={`flex flex-col ${
-        isCustomFullscreen ? 'w-full h-full' : 'w-full max-w-4xl'
+        isCustomFullscreen ? 'w-full h-full' :
+        platform === 'desktop' ? 'w-full max-w-2xl' : 'w-full max-w-4xl'
       }`}>
         <div className={`relative bg-black overflow-hidden ${
           isCustomFullscreen ? 'flex-1' : 'aspect-video rounded-lg mb-4'
         }`}>
           <video
             ref={videoRef}
-            className="w-full h-full object-contain"
+            className={`w-full h-full object-contain ${
+              platform === 'desktop' ? 'max-h-96' : ''
+            }`}
             autoPlay
             playsInline
             controls={false}
+            controlsList="nodownload nofullscreen noremoteplayback"
+            disablePictureInPicture
           />
           
           {/* Loading Overlay */}

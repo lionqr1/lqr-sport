@@ -707,6 +707,7 @@ export default function Desktop() {
         onClose={closeVideoPlayer}
         streamUrl={currentStreamUrl}
         title={currentStreamTitle}
+        platform="desktop"
       />
     </div>
   );
