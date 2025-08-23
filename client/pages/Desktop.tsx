@@ -224,7 +224,8 @@ export default function Desktop() {
         fetchChannels(),
         fetchLiveTV(),
         fetchRadio(),
-        fetchUpdates()
+        fetchUpdates(),
+        new Promise(resolve => setTimeout(resolve, 3500)) // 3.5 second minimum loading
       ]);
       setIsInitialLoading(false);
     };
