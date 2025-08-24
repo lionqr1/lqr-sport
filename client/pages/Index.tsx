@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -56,7 +56,6 @@ export default function Index() {
   const [isMuted, setIsMuted] = useState(false);
   const [radioStatus, setRadioStatus] = useState<Record<number, 'online' | 'offline' | 'checking'>>({});
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [favoriteItems, setFavoriteItems] = useState<Record<string, boolean>>({});
 
   // Fetch functions
   const fetchChannels = async () => {
@@ -192,20 +191,20 @@ export default function Index() {
   };
 
   // Video player functions
-  const openVideoPlayer = (url: string, title: string) => {
+  const openVideoPlayer = useCallback((url: string, title: string) => {
     setCurrentStreamUrl(url);
     setCurrentStreamTitle(title);
     setIsVideoModalOpen(true);
-  };
+  }, []);
 
-  const closeVideoPlayer = () => {
+  const closeVideoPlayer = useCallback(() => {
     setIsVideoModalOpen(false);
     setCurrentStreamUrl('');
     setCurrentStreamTitle('');
-  };
+  }, []);
 
   // Favorites functions
-  const toggleFavorite = (item: any, type: 'channel' | 'stream' | 'radio') => {
+  const toggleFavorite = useCallback((item: any, type: 'channel' | 'stream' | 'radio') => {
     const favoriteItem: FavoriteItem = {
       id: item.id,
       name: item.name || item.title,
@@ -216,21 +215,21 @@ export default function Index() {
       title: item.title
     };
 
-    const key = `${type}-${item.id}`;
     const isCurrentlyFavorite = isFavorite(item.id, type);
 
     if (isCurrentlyFavorite) {
       removeFromFavorites(item.id, type);
-      setFavoriteItems(prev => ({ ...prev, [key]: false }));
     } else {
       addToFavorites(favoriteItem);
-      setFavoriteItems(prev => ({ ...prev, [key]: true }));
     }
-  };
 
-  const checkFavoriteStatus = (id: number, type: string) => {
+    // Force re-render by updating a counter or timestamp
+    setCurrentSection(prev => prev);
+  }, []);
+
+  const checkFavoriteStatus = useCallback((id: number, type: string) => {
     return isFavorite(id, type);
-  };
+  }, []);
 
   // Filter functions
   const filteredChannels = channels.filter(channel =>
