@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
 import VideoPlayerModal from "@/components/VideoPlayerModal";
 import LoadingScreen from "@/components/LoadingScreen";
+import Settings from "@/components/Settings";
+import Favorites from "@/components/Favorites";
+import { addToFavorites, removeFromFavorites, isFavorite, type FavoriteItem } from "@/lib/favorites";
 import { supabase, type Channel, type LiveTV, type Radio, type Update } from "@/lib/supabase";
 import { 
   Play, 
@@ -52,6 +55,7 @@ export default function Index() {
   const [isMuted, setIsMuted] = useState(false);
   const [radioStatus, setRadioStatus] = useState<Record<number, 'online' | 'offline' | 'checking'>>({});
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [favoriteItems, setFavoriteItems] = useState<Record<string, boolean>>({});
 
   // Fetch functions
   const fetchChannels = async () => {
@@ -197,6 +201,34 @@ export default function Index() {
     setIsVideoModalOpen(false);
     setCurrentStreamUrl('');
     setCurrentStreamTitle('');
+  };
+
+  // Favorites functions
+  const toggleFavorite = (item: any, type: 'channel' | 'stream' | 'radio') => {
+    const favoriteItem: FavoriteItem = {
+      id: item.id,
+      name: item.name || item.title,
+      type,
+      stream_url: item.stream_url,
+      live_url: item.live_url,
+      logo_url: item.logo_url,
+      title: item.title
+    };
+
+    const key = `${type}-${item.id}`;
+    const isCurrentlyFavorite = isFavorite(item.id, type);
+
+    if (isCurrentlyFavorite) {
+      removeFromFavorites(item.id, type);
+      setFavoriteItems(prev => ({ ...prev, [key]: false }));
+    } else {
+      addToFavorites(favoriteItem);
+      setFavoriteItems(prev => ({ ...prev, [key]: true }));
+    }
+  };
+
+  const checkFavoriteStatus = (id: number, type: string) => {
+    return isFavorite(id, type);
   };
 
   // Filter functions
@@ -597,6 +629,20 @@ export default function Index() {
           </div>
         )}
 
+        {/* Favorites Section */}
+        {currentSection === 'favorites' && (
+          <div>
+            <Favorites onPlay={openVideoPlayer} />
+          </div>
+        )}
+
+        {/* Settings Section */}
+        {currentSection === 'settings' && (
+          <div>
+            <Settings />
+          </div>
+        )}
+
         {/* Contact Section */}
         {currentSection === 'contact' && (
           <div>
@@ -673,7 +719,7 @@ export default function Index() {
 
                       <div className="mt-6 pt-4 border-t border-gray-700">
                         <p className="text-xs text-gray-500 text-center">
-                          LQR SPORT WAS CREATED 1 day ago
+                          LQR SPORT WAS CREATED January 15, 2024
                         </p>
                       </div>
                     </div>

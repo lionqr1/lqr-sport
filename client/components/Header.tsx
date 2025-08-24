@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, Radio, Users, Newspaper, Copyright, Phone, Play } from "lucide-react";
+import { Menu, Radio, Users, Newspaper, Copyright, Phone, Play, Settings, Heart } from "lucide-react";
 
 interface HeaderProps {
   onSectionChange: (section: string) => void;
