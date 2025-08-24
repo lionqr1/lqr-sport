@@ -15,6 +15,8 @@ export default function Header({ onSectionChange, currentSection }: HeaderProps)
     { id: 'channels', name: "Channels", icon: Users },
     { id: 'radio', name: "Radio", icon: Radio },
     { id: 'updates', name: "Updates", icon: Newspaper },
+    { id: 'favorites', name: "Favorites", icon: Heart },
+    { id: 'settings', name: "Settings", icon: Settings },
     { id: 'copyright', name: "Copyright Notice", icon: Copyright },
     { id: 'contact', name: "Contact", icon: Phone },
   ];
