@@ -710,7 +710,7 @@ export default function Desktop() {
 
                       <div className="mt-4 pt-4 border-t border-gray-700">
                         <p className="text-xs text-gray-500 text-center">
-                          LQR SPORT WAS CREATED 1 day ago
+                          LQR SPORT WAS CREATED January 15, 2024
                         </p>
                       </div>
                     </div>

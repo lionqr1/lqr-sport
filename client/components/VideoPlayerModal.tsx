@@ -75,11 +75,62 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
 
   const [isInIframe, setIsInIframe] = useState(false);
   const [isCustomFullscreen, setIsCustomFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [controlsTimeout, setControlsTimeout] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Check if we're in an iframe
     setIsInIframe(window !== window.parent);
   }, []);
+
+  // Handle mouse movement in fullscreen
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleMouseMove = () => {
+      setShowControls(true);
+
+      // Clear existing timeout
+      if (controlsTimeout) {
+        clearTimeout(controlsTimeout);
+      }
+
+      // Set new timeout to hide controls after 2 seconds (desktop) or 3 seconds (mobile/iframe)
+      const delay = platform === 'desktop' ? 2000 : 3000;
+      const timeout = setTimeout(() => {
+        if (isCustomFullscreen || document.fullscreenElement) {
+          setShowControls(false);
+        }
+      }, delay);
+
+      setControlsTimeout(timeout);
+    };
+
+    const handleMouseLeave = () => {
+      if (isCustomFullscreen || document.fullscreenElement) {
+        setShowControls(false);
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseleave', handleMouseLeave);
+
+    // Initially hide controls after delay in fullscreen
+    if (isCustomFullscreen || document.fullscreenElement) {
+      const initialTimeout = setTimeout(() => {
+        setShowControls(false);
+      }, platform === 'desktop' ? 2000 : 3000);
+      setControlsTimeout(initialTimeout);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      if (controlsTimeout) {
+        clearTimeout(controlsTimeout);
+      }
+    };
+  }, [isOpen, isCustomFullscreen, platform, controlsTimeout]);
 
   const toggleFullscreen = () => {
     if (!videoRef.current) return;
@@ -122,6 +173,12 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
     }
     setIsPlaying(false);
     setIsLoading(true);
+    setIsCustomFullscreen(false);
+    setShowControls(true);
+    if (controlsTimeout) {
+      clearTimeout(controlsTimeout);
+      setControlsTimeout(null);
+    }
     onClose();
   };
 
@@ -171,15 +228,19 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
           {/* Close Button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 w-10 h-10 bg-black bg-opacity-75 hover:bg-opacity-100 text-white rounded-full flex items-center justify-center transition-all"
+            className={`absolute top-4 right-4 w-10 h-10 bg-black bg-opacity-75 hover:bg-opacity-100 text-white rounded-full flex items-center justify-center transition-all ${
+              (isCustomFullscreen || document.fullscreenElement) && !showControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Controls */}
-        <div className={`flex items-center justify-between bg-gray-800 p-4 ${
-          isCustomFullscreen ? 'absolute bottom-0 left-0 right-0 z-10' : 'rounded-lg'
+        <div className={`flex items-center justify-between bg-gray-800 p-4 transition-opacity duration-300 ${
+          isCustomFullscreen ? `absolute bottom-0 left-0 right-0 z-10 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}` : 'rounded-lg'
+        } ${
+          document.fullscreenElement && platform === 'desktop' ? `${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}` : ''
         }`}>
           {/* Left Controls */}
           <div className="flex items-center space-x-2">
@@ -232,7 +293,9 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
         {isCustomFullscreen && (
           <button
             onClick={() => setIsCustomFullscreen(false)}
-            className="absolute top-4 right-4 z-20 w-12 h-12 bg-black bg-opacity-75 hover:bg-opacity-100 text-white rounded-full flex items-center justify-center transition-all"
+            className={`absolute top-4 right-4 z-20 w-12 h-12 bg-black bg-opacity-75 hover:bg-opacity-100 text-white rounded-full flex items-center justify-center transition-all ${
+              showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
           >
             <X className="w-6 h-6" />
           </button>
