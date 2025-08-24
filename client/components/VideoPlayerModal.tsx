@@ -76,7 +76,7 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
   const [isInIframe, setIsInIframe] = useState(false);
   const [isCustomFullscreen, setIsCustomFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [controlsTimeout, setControlsTimeout] = useState<NodeJS.Timeout | null>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Check if we're in an iframe
@@ -91,19 +91,17 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
       setShowControls(true);
 
       // Clear existing timeout
-      if (controlsTimeout) {
-        clearTimeout(controlsTimeout);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
       }
 
       // Set new timeout to hide controls after 2 seconds (desktop) or 3 seconds (mobile/iframe)
       const delay = platform === 'desktop' ? 2000 : 3000;
-      const timeout = setTimeout(() => {
+      controlsTimeoutRef.current = setTimeout(() => {
         if (isCustomFullscreen || document.fullscreenElement) {
           setShowControls(false);
         }
       }, delay);
-
-      setControlsTimeout(timeout);
     };
 
     const handleMouseLeave = () => {
@@ -117,20 +115,20 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
 
     // Initially hide controls after delay in fullscreen
     if (isCustomFullscreen || document.fullscreenElement) {
-      const initialTimeout = setTimeout(() => {
+      controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, platform === 'desktop' ? 2000 : 3000);
-      setControlsTimeout(initialTimeout);
     }
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseleave', handleMouseLeave);
-      if (controlsTimeout) {
-        clearTimeout(controlsTimeout);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+        controlsTimeoutRef.current = null;
       }
     };
-  }, [isOpen, isCustomFullscreen, platform, controlsTimeout]);
+  }, [isOpen, isCustomFullscreen, platform]);
 
   const toggleFullscreen = () => {
     if (!videoRef.current) return;
@@ -175,9 +173,9 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
     setIsLoading(true);
     setIsCustomFullscreen(false);
     setShowControls(true);
-    if (controlsTimeout) {
-      clearTimeout(controlsTimeout);
-      setControlsTimeout(null);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+      controlsTimeoutRef.current = null;
     }
     onClose();
   };
