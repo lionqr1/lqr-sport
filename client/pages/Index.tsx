@@ -10,18 +10,19 @@ import Settings from "@/components/Settings";
 import Favorites from "@/components/Favorites";
 import { addToFavorites, removeFromFavorites, isFavorite, type FavoriteItem } from "@/lib/favorites";
 import { supabase, type Channel, type LiveTV, type Radio, type Update } from "@/lib/supabase";
-import { 
-  Play, 
-  Radio as RadioIcon, 
-  Users, 
-  Clock, 
+import {
+  Play,
+  Radio as RadioIcon,
+  Users,
+  Clock,
   AlertCircle,
   Pause,
   Volume2,
   VolumeX,
   Maximize,
   Search,
-  Loader2
+  Loader2,
+  Heart
 } from "lucide-react";
 
 export default function Index() {
@@ -346,13 +347,29 @@ export default function Index() {
                           <p className="text-xs text-gray-400">Live Stream</p>
                         </div>
                       </div>
-                      <Button 
-                        onClick={() => openVideoPlayer(stream.stream_url, stream.name)}
-                        className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-                      >
-                        <Play className="w-4 h-4 mr-2" />
-                        Watch Now
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => openVideoPlayer(stream.stream_url, stream.name)}
+                          className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                        >
+                          <Play className="w-4 h-4 mr-2" />
+                          Watch Now
+                        </Button>
+                        <Button
+                          onClick={() => toggleFavorite(stream, 'stream')}
+                          variant="outline"
+                          size="icon"
+                          className={`border-gray-600 hover:bg-gray-700 ${
+                            checkFavoriteStatus(stream.id, 'stream')
+                              ? 'text-red-500 bg-red-500/20 border-red-500'
+                              : 'text-gray-400'
+                          }`}
+                        >
+                          <Heart className={`w-4 h-4 ${
+                            checkFavoriteStatus(stream.id, 'stream') ? 'fill-current' : ''
+                          }`} />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -400,13 +417,29 @@ export default function Index() {
                         )}
                         <h3 className="font-semibold text-white">{channel.name}</h3>
                       </div>
-                      <Button 
-                        onClick={() => openVideoPlayer(channel.stream_url, channel.name)}
-                        className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-                      >
-                        <Play className="w-4 h-4 mr-2" />
-                        Watch
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => openVideoPlayer(channel.stream_url, channel.name)}
+                          className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                        >
+                          <Play className="w-4 h-4 mr-2" />
+                          Watch
+                        </Button>
+                        <Button
+                          onClick={() => toggleFavorite(channel, 'channel')}
+                          variant="outline"
+                          size="icon"
+                          className={`border-gray-600 hover:bg-gray-700 ${
+                            checkFavoriteStatus(channel.id, 'channel')
+                              ? 'text-red-500 bg-red-500/20 border-red-500'
+                              : 'text-gray-400'
+                          }`}
+                        >
+                          <Heart className={`w-4 h-4 ${
+                            checkFavoriteStatus(channel.id, 'channel') ? 'fill-current' : ''
+                          }`} />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -533,37 +566,56 @@ export default function Index() {
                         <h3 className="font-bold text-white mb-2 truncate">{station.title}</h3>
                         <p className="text-sm text-gray-400 mb-4">Radio Station</p>
 
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (currentRadio?.id === station.id) {
-                              toggleRadio();
-                            } else {
-                              setCurrentRadio(station);
-                              if (!isPlaying) {
-                                // Will start playing when currentRadio changes
-                                setTimeout(() => toggleRadio(), 100);
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (currentRadio?.id === station.id) {
+                                toggleRadio();
+                              } else {
+                                setCurrentRadio(station);
+                                if (!isPlaying) {
+                                  // Will start playing when currentRadio changes
+                                  setTimeout(() => toggleRadio(), 100);
+                                }
                               }
-                            }
-                          }}
-                          className={`w-full transition-colors ${
-                            currentRadio?.id === station.id && isPlaying
-                              ? 'bg-red-600 hover:bg-red-700 text-white'
-                              : 'bg-orange-600 hover:bg-orange-700 text-white'
-                          }`}
-                        >
-                          {currentRadio?.id === station.id && isPlaying ? (
-                            <>
-                              <Pause className="w-4 h-4 mr-2" />
-                              Playing
-                            </>
-                          ) : (
-                            <>
-                              <Play className="w-4 h-4 mr-2" />
-                              Listen Live
-                            </>
-                          )}
-                        </Button>
+                            }}
+                            className={`flex-1 transition-colors ${
+                              currentRadio?.id === station.id && isPlaying
+                                ? 'bg-red-600 hover:bg-red-700 text-white'
+                                : 'bg-orange-600 hover:bg-orange-700 text-white'
+                            }`}
+                          >
+                            {currentRadio?.id === station.id && isPlaying ? (
+                              <>
+                                <Pause className="w-4 h-4 mr-2" />
+                                Playing
+                              </>
+                            ) : (
+                              <>
+                                <Play className="w-4 h-4 mr-2" />
+                                Listen Live
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(station, 'radio');
+                            }}
+                            variant="outline"
+                            size="icon"
+                            className={`border-gray-600 hover:bg-gray-700 ${
+                              checkFavoriteStatus(station.id, 'radio')
+                                ? 'text-red-500 bg-red-500/20 border-red-500'
+                                : 'text-gray-400'
+                            }`}
+                          >
+                            <Heart className={`w-4 h-4 ${
+                              checkFavoriteStatus(station.id, 'radio') ? 'fill-current' : ''
+                            }`} />
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
