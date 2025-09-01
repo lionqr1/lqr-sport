@@ -217,11 +217,13 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
           )}
 
           {/* Video Title Overlay */}
-          <div className="absolute top-4 left-4 right-4">
-            <div className="bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg">
-              <h3 className="font-semibold truncate">{title}</h3>
+          {(!isCustomFullscreen && !document.fullscreenElement) || showControls ? (
+            <div className="absolute top-4 left-4 right-4">
+              <div className="bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg">
+                <h3 className="font-semibold truncate">{title}</h3>
+              </div>
             </div>
-          </div>
+          ) : null}
 
           {/* Close Button */}
           <button
