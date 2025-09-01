@@ -7,13 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import AdminLogin from "@/components/AdminLogin";
 import LoadingScreen from "@/components/LoadingScreen";
-import { supabase, type Channel, type LiveTV, type Radio, type Update } from "@/lib/supabase";
+import { supabase, type Channel, type LiveTV, type Radio, type Update, type Team, type League, type Match, type MatchSource, type Message } from "@/lib/supabase";
 import { 
   Shield, 
   BarChart3, 
-  Users, 
-  Radio as RadioIcon, 
-  Tv, 
+  Users,
+  Radio as RadioIcon,
+  Tv,
   MessageSquare,
   Plus,
   Edit,
@@ -26,7 +26,10 @@ import {
   Loader2,
   Database,
   Activity,
-  Globe
+  Globe,
+  Trophy,
+  Calendar,
+  Mails
 } from "lucide-react";
 
 export default function Admin() {
@@ -39,6 +42,11 @@ export default function Admin() {
   const [liveTV, setLiveTV] = useState<LiveTV[]>([]);
   const [radio, setRadio] = useState<Radio[]>([]);
   const [updates, setUpdates] = useState<Update[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [leagues, setLeagues] = useState<League[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [matchSources, setMatchSources] = useState<MatchSource[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   // Form states
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -58,17 +66,27 @@ export default function Admin() {
   // Fetch all data
   const fetchAllData = async () => {
     try {
-      const [channelsRes, liveRes, radioRes, updatesRes] = await Promise.all([
+      const [channelsRes, liveRes, radioRes, updatesRes, teamsRes, leaguesRes, matchesRes, matchSrcRes, messagesRes] = await Promise.all([
         supabase.from('tv_channels').select('*').order('name'),
         supabase.from('live_tv').select('*').order('name'),
         supabase.from('radio').select('*').order('title'),
-        supabase.from('updates').select('*').order('created_at', { ascending: false })
+        supabase.from('updates').select('*').order('created_at', { ascending: false }),
+        supabase.from('teams').select('*').order('name'),
+        supabase.from('leagues').select('*').order('name'),
+        supabase.from('matches').select('*').order('match_time', { ascending: true }),
+        supabase.from('match_sources').select('*'),
+        supabase.from('messages').select('*').order('created_at', { ascending: false })
       ]);
 
       if (channelsRes.data) setChannels(channelsRes.data);
       if (liveRes.data) setLiveTV(liveRes.data);
       if (radioRes.data) setRadio(radioRes.data);
       if (updatesRes.data) setUpdates(updatesRes.data);
+      if (teamsRes.data) setTeams(teamsRes.data);
+      if (leaguesRes.data) setLeagues(leaguesRes.data);
+      if (matchesRes.data) setMatches(matchesRes.data);
+      if (matchSrcRes.data) setMatchSources(matchSrcRes.data);
+      if (messagesRes.data) setMessages(messagesRes.data);
 
       // Update analytics
       setAnalytics({
@@ -260,12 +278,94 @@ export default function Admin() {
             </>
           )}
 
+          {type === 'Team' && (
+            <>
+              <Input
+                placeholder="Team Name"
+                value={currentData.name || ''}
+                onChange={(e) => setFormData({...currentData, name: e.target.value})}
+                className="bg-gray-700 border-gray-600 text-white"
+              />
+              <Input
+                placeholder="Logo URL (optional)"
+                value={currentData.logo_url || ''}
+                onChange={(e) => setFormData({...currentData, logo_url: e.target.value})}
+                className="bg-gray-700 border-gray-600 text-white"
+              />
+            </>
+          )}
+
+          {type === 'League' && (
+            <>
+              <Input
+                placeholder="League Name"
+                value={currentData.name || ''}
+                onChange={(e) => setFormData({...currentData, name: e.target.value})}
+                className="bg-gray-700 border-gray-600 text-white"
+              />
+              <Input
+                placeholder="Logo URL (optional)"
+                value={currentData.logo_url || ''}
+                onChange={(e) => setFormData({...currentData, logo_url: e.target.value})}
+                className="bg-gray-700 border-gray-600 text-white"
+              />
+            </>
+          )}
+
+          {type === 'Match' && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <select
+                  value={currentData.home_team_id || ''}
+                  onChange={(e) => setFormData({ ...currentData, home_team_id: Number(e.target.value) })}
+                  className="bg-gray-700 border-gray-600 text-white rounded p-2"
+                >
+                  <option value="" disabled>Home Team</option>
+                  {teams.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+                <select
+                  value={currentData.away_team_id || ''}
+                  onChange={(e) => setFormData({ ...currentData, away_team_id: Number(e.target.value) })}
+                  className="bg-gray-700 border-gray-600 text-white rounded p-2"
+                >
+                  <option value="" disabled>Away Team</option>
+                  {teams.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <select
+                  value={currentData.league_id || ''}
+                  onChange={(e) => setFormData({ ...currentData, league_id: Number(e.target.value) })}
+                  className="bg-gray-700 border-gray-600 text-white rounded p-2"
+                >
+                  <option value="" disabled>League</option>
+                  {leagues.map(l => (
+                    <option key={l.id} value={l.id}>{l.name}</option>
+                  ))}
+                </select>
+                <input
+                  type="datetime-local"
+                  value={currentData.match_time ? new Date(currentData.match_time).toISOString().slice(0,16) : ''}
+                  onChange={(e) => setFormData({ ...currentData, match_time: new Date(e.target.value).toISOString() })}
+                  className="bg-gray-700 border-gray-600 text-white rounded p-2"
+                />
+              </div>
+            </>
+          )}
+
           <div className="flex space-x-2">
             <Button
               onClick={() => {
-                const table = type === 'Channel' ? 'tv_channels' : 
-                           type === 'Stream' ? 'live_tv' : 
-                           type === 'Radio' ? 'radio' : 'updates';
+                const table = type === 'Channel' ? 'tv_channels' :
+                           type === 'Stream' ? 'live_tv' :
+                           type === 'Radio' ? 'radio' :
+                           type === 'Team' ? 'teams' :
+                           type === 'League' ? 'leagues' :
+                           type === 'Match' ? 'matches' : 'updates';
                 
                 if (isEdit) {
                   handleUpdate(table, item.id, currentData);
@@ -388,7 +488,7 @@ export default function Admin() {
 
       <main className="max-w-7xl mx-auto p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8 bg-gray-800">
+          <TabsList className="grid w-full grid-cols-8 mb-8 bg-gray-800">
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-orange-600">
               <BarChart3 className="w-4 h-4 mr-2" />
               Dashboard
@@ -405,9 +505,25 @@ export default function Admin() {
               <RadioIcon className="w-4 h-4 mr-2" />
               Radio
             </TabsTrigger>
+            <TabsTrigger value="teams" className="data-[state=active]:bg-orange-600">
+              <Users className="w-4 h-4 mr-2" />
+              Teams
+            </TabsTrigger>
+            <TabsTrigger value="leagues" className="data-[state=active]:bg-orange-600">
+              <Trophy className="w-4 h-4 mr-2" />
+              Leagues
+            </TabsTrigger>
+            <TabsTrigger value="matches" className="data-[state=active]:bg-orange-600">
+              <Calendar className="w-4 h-4 mr-2" />
+              Matches
+            </TabsTrigger>
             <TabsTrigger value="updates" className="data-[state=active]:bg-orange-600">
               <MessageSquare className="w-4 h-4 mr-2" />
               Updates
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="data-[state=active]:bg-orange-600">
+              <Mails className="w-4 h-4 mr-2" />
+              Messages
             </TabsTrigger>
           </TabsList>
 
@@ -552,6 +668,124 @@ export default function Admin() {
             </div>
           </TabsContent>
 
+          {/* Teams Tab */}
+          <TabsContent value="teams">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Teams Management</h2>
+                <Button onClick={() => setEditingItem('new')} className="bg-green-600 hover:bg-green-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Team
+                </Button>
+              </div>
+              {editingItem && renderForm('Team', editingItem === 'new' ? null : editingItem)}
+              {renderDataTable(teams, 'Team', 'teams')}
+            </div>
+          </TabsContent>
+
+          {/* Leagues Tab */}
+          <TabsContent value="leagues">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Leagues Management</h2>
+                <Button onClick={() => setEditingItem('new')} className="bg-green-600 hover:bg-green-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add League
+                </Button>
+              </div>
+              {editingItem && renderForm('League', editingItem === 'new' ? null : editingItem)}
+              {renderDataTable(leagues, 'League', 'leagues')}
+            </div>
+          </TabsContent>
+
+          {/* Matches Tab */}
+          <TabsContent value="matches">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Matches Management</h2>
+                <Button onClick={() => setEditingItem('new')} className="bg-green-600 hover:bg-green-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Match
+                </Button>
+              </div>
+
+              {editingItem && renderForm('Match', editingItem === 'new' ? null : editingItem)}
+
+              {/* Matches list with sources management */}
+              <div className="space-y-4">
+                {matches.map((m) => {
+                  const home = teams.find(t => t.id === m.home_team_id);
+                  const away = teams.find(t => t.id === m.away_team_id);
+                  const league = leagues.find(l => l.id === m.league_id);
+                  const sources = matchSources.filter(s => s.match_id === m.id);
+                  return (
+                    <Card key={m.id} className="bg-gray-800 border-gray-700">
+                      <CardContent className="p-4 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-semibold text-white">{home?.name} vs {away?.name}</h3>
+                            <p className="text-sm text-gray-400">{league?.name} • {new Date(m.match_time).toLocaleString()}</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button size="sm" variant="outline" onClick={() => { setEditingItem(m); setFormData(m); }} className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => handleDelete('matches', m.id)} className="border-red-600 text-red-400 hover:bg-red-900">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Add source */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                          <select id={`type-${m.id}`} className="bg-gray-700 border-gray-600 text-white rounded p-2">
+                            <option value="channel">Channel</option>
+                            <option value="stream">Stream</option>
+                          </select>
+                          <select id={`source-${m.id}`} className="bg-gray-700 border-gray-600 text-white rounded p-2 col-span-2">
+                            {[...channels.map(c => ({ id: c.id, name: c.name, type: 'channel' as const })), ...liveTV.map(s => ({ id: s.id, name: s.name, type: 'stream' as const }))].map(opt => (
+                              <option key={`${opt.type}-${opt.id}`} value={`${opt.type}:${opt.id}`}>{opt.name} ({opt.type})</option>
+                            ))}
+                          </select>
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={async () => {
+                              const typeEl = document.getElementById(`type-${m.id}`) as HTMLSelectElement | null;
+                              const srcEl = document.getElementById(`source-${m.id}`) as HTMLSelectElement | null;
+                              if (!typeEl || !srcEl) return;
+                              const [stype, sid] = srcEl.value.split(':');
+                              const { error } = await supabase.from('match_sources').insert([{ match_id: m.id, source_type: stype, source_id: Number(sid) }]);
+                              if (!error) fetchAllData();
+                            }}
+                          >
+                            Add Source
+                          </Button>
+                        </div>
+
+                        {/* Current sources */}
+                        <div className="space-y-2">
+                          {sources.length === 0 ? (
+                            <p className="text-sm text-gray-500">No sources added yet.</p>
+                          ) : (
+                            sources.map(s => (
+                              <div key={s.id} className="flex items-center justify-between bg-gray-700 rounded p-2">
+                                <span className="text-sm text-white">{s.source_type} #{s.source_id}</span>
+                                <Button size="sm" variant="outline" onClick={() => handleDelete('match_sources', s.id)} className="border-red-600 text-red-400 hover:bg-red-900">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </TabsContent>
+
           {/* Updates Tab */}
           <TabsContent value="updates">
             <div className="space-y-6">
@@ -568,6 +802,32 @@ export default function Admin() {
 
               {editingItem && renderForm('Update', editingItem === 'new' ? null : editingItem)}
               {renderDataTable(updates, 'Update', 'updates')}
+            </div>
+          </TabsContent>
+
+          {/* Messages Tab */}
+          <TabsContent value="messages">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold">Contact Messages</h2>
+              <div className="space-y-4">
+                {messages.map(msg => (
+                  <Card key={msg.id} className="bg-gray-800 border-gray-700">
+                    <CardContent className="p-4 flex items-start justify-between">
+                      <div>
+                        <p className="text-white font-medium">{msg.email}</p>
+                        <p className="text-gray-300 mt-1 whitespace-pre-wrap">{msg.content}</p>
+                        <p className="text-xs text-gray-500 mt-2">{new Date(msg.created_at).toLocaleString()}</p>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => handleDelete('messages', msg.id)} className="border-red-600 text-red-400 hover:bg-red-900">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+                {messages.length === 0 && (
+                  <p className="text-gray-400">No messages yet.</p>
+                )}
+              </div>
             </div>
           </TabsContent>
         </Tabs>
