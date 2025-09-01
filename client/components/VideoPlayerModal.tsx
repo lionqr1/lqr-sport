@@ -95,8 +95,8 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
         clearTimeout(controlsTimeoutRef.current);
       }
 
-      // Set new timeout to hide controls after 2 seconds (desktop) or 3 seconds (mobile/iframe)
-      const delay = platform === 'desktop' ? 2000 : 3000;
+      // Hide controls after 2 seconds on all platforms
+      const delay = 2000;
       controlsTimeoutRef.current = setTimeout(() => {
         if (isCustomFullscreen || document.fullscreenElement) {
           setShowControls(false);
@@ -117,7 +117,7 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
     if (isCustomFullscreen || document.fullscreenElement) {
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
-      }, platform === 'desktop' ? 2000 : 3000);
+      }, 2000);
     }
 
     return () => {
