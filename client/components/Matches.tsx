@@ -142,7 +142,7 @@ export default function Matches({ onWatch }: MatchesProps) {
                 <span className="text-gray-400">vs</span>
                 <div className="flex items-center gap-2 min-w-0">
                   {match.away.logo_url ? (
-                    <img src={match.away.logo_url} alt={match.away.name} className="w-8 h-8 object-contain rounded" />
+                    <img src={match.away.logo_url} alt={match.away.name} className="w-10 h-10 object-contain rounded shrink-0" />
                   ) : (
                     <div className="w-8 h-8 rounded bg-red-600 flex items-center justify-center">
                       <Users className="w-4 h-4 text-white" />
