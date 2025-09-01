@@ -174,6 +174,32 @@ export default function Matches({ onWatch }: MatchesProps) {
           </CardContent>
         </Card>
       ))}
+
+      {/* Source Picker */}
+      <Dialog open={!!pickerOpen} onOpenChange={(o)=>!o && setPickerOpen(null)}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Select a source</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {pickerOpen?.sources.map((s, idx) => (
+              <Button key={s.id}
+                onClick={() => {
+                  if (!pickerOpen) return;
+                  const ordered = [s, ...pickerOpen.sources.filter(x=>x.id!==s.id)];
+                  const alts = ordered.slice(1).map(x=>({ url: x.url, label: x.label }));
+                  onWatch(s.url, pickerOpen.title, alts);
+                  setPickerOpen(null);
+                }}
+                className="w-full justify-start bg-gray-800 hover:bg-gray-700"
+              >
+                <span className="mr-2 inline-block px-2 py-0.5 rounded bg-gray-700 text-xs">{idx+1}</span>
+                {s.label} <span className="ml-2 text-xs text-gray-400">({s.type})</span>
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
