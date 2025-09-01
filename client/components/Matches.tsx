@@ -189,10 +189,16 @@ export default function Matches({ onWatch }: MatchesProps) {
                   disabled={match.sources.length === 0}
                   onClick={() => {
                     const srcId = selectedSource[match.id] ?? match.sources[0]?.id;
-                    const src = match.sources.find(s => s.id === srcId);
-                    if (src) {
+                    const ordered = [...match.sources];
+                    if (srcId) {
+                      ordered.sort((a,b) => (a.id===srcId? -1 : b.id===srcId? 1 : 0));
+                    }
+                    const primary = ordered[0];
+                    if (primary) {
                       const title = `${match.home.name} vs ${match.away.name} ${match.league ? `- ${match.league.name}` : ''}`.trim();
-                      onWatch(src.url, title);
+                      const alts = ordered.map(s => ({ url: s.url, label: s.label }))
+                        .slice(1);
+                      onWatch(primary.url, title, alts);
                     }
                   }}
                   className="bg-orange-600 hover:bg-orange-700 text-white"
