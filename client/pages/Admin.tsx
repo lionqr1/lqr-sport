@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import AdminLogin from "@/components/AdminLogin";
 import LoadingScreen from "@/components/LoadingScreen";
 import { supabase, type Channel, type LiveTV, type Radio, type Update, type Team, type League, type Match, type MatchSource, type Message } from "@/lib/supabase";
-import { 
-  Shield, 
-  BarChart3, 
+import {
+  Shield,
+  BarChart3,
   Users,
   Radio as RadioIcon,
   Tv,
@@ -29,8 +29,11 @@ import {
   Globe,
   Trophy,
   Calendar,
-  Mail
+  Mail,
+  Search
 } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandGroup, CommandItem, CommandEmpty } from "@/components/ui/command";
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -47,6 +50,8 @@ export default function Admin() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [matchSources, setMatchSources] = useState<MatchSource[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedMatchSource, setSelectedMatchSource] = useState<Record<number, { type: 'channel' | 'stream'; id: number; name: string } | null>>({});
+  const [pickerOpen, setPickerOpen] = useState<Record<number, boolean>>({});
 
   // Form states
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -879,30 +884,64 @@ export default function Admin() {
                           </div>
                         </div>
 
-                        {/* Add source */}
+                        {/* Add source with searchable picker */}
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-                          <select id={`type-${m.id}`} className="bg-gray-700 border-gray-600 text-white rounded p-2">
-                            <option value="channel">Channel</option>
-                            <option value="stream">Stream</option>
-                          </select>
-                          <select id={`source-${m.id}`} className="bg-gray-700 border-gray-600 text-white rounded p-2 md:col-span-2">
-                            {[...channels.map(c => ({ id: c.id, name: c.name, type: 'channel' as const })), ...liveTV.map(s => ({ id: s.id, name: s.name, type: 'stream' as const }))].map(opt => (
-                              <option key={`${opt.type}-${opt.id}`} value={`${opt.type}:${opt.id}`}>{opt.name} ({opt.type})</option>
-                            ))}
-                          </select>
+                          <div className="md:col-span-3">
+                            <Popover open={!!pickerOpen[m.id]} onOpenChange={(open) => setPickerOpen(prev => ({ ...prev, [m.id]: open }))}>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-between border-gray-600 text-gray-200 hover:bg-gray-700">
+                                  <span className="truncate">
+                                    {selectedMatchSource[m.id]?.name ? `${selectedMatchSource[m.id]?.name} (${selectedMatchSource[m.id]?.type})` : 'Search channel or stream'}
+                                  </span>
+                                  <Search className="w-4 h-4 ml-2 opacity-70" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80 p-0 bg-gray-800 border-gray-700 text-white">
+                                <Command>
+                                  <CommandInput placeholder="Search channels or streams..." className="text-white placeholder:text-gray-400" />
+                                  <CommandList>
+                                    <CommandEmpty>No results found.</CommandEmpty>
+                                    <CommandGroup heading="Channels">
+                                      {channels.map(c => (
+                                        <CommandItem key={`channel-${c.id}`} value={`channel-${c.name}`} onSelect={() => {
+                                          setSelectedMatchSource(prev => ({ ...prev, [m.id]: { type: 'channel', id: c.id, name: c.name } }));
+                                          setPickerOpen(prev => ({ ...prev, [m.id]: false }));
+                                        }}>
+                                          {c.name}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                    <CommandGroup heading="Streams">
+                                      {liveTV.map(s => (
+                                        <CommandItem key={`stream-${s.id}`} value={`stream-${s.name}`} onSelect={() => {
+                                          setSelectedMatchSource(prev => ({ ...prev, [m.id]: { type: 'stream', id: s.id, name: s.name } }));
+                                          setPickerOpen(prev => ({ ...prev, [m.id]: false }));
+                                        }}>
+                                          {s.name}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
                           <input id={`label-${m.id}`} placeholder="Label (optional)" className="bg-gray-700 border-gray-600 text-white rounded p-2" />
                           <Button
                             size="sm"
                             className="bg-green-600 hover:bg-green-700"
                             onClick={async () => {
-                              const srcEl = document.getElementById(`source-${m.id}`) as HTMLSelectElement | null;
                               const labelEl = document.getElementById(`label-${m.id}`) as HTMLInputElement | null;
-                              if (!srcEl) return;
-                              const [stype, sid] = srcEl.value.split(':');
-                              const payload: any = { match_id: m.id, source_type: stype, source_id: Number(sid) };
+                              const sel = selectedMatchSource[m.id];
+                              if (!sel) return;
+                              const payload: any = { match_id: m.id, source_type: sel.type, source_id: sel.id };
                               if (labelEl && labelEl.value) payload.label = labelEl.value;
                               const { error } = await supabase.from('match_sources').insert([payload]);
-                              if (!error) fetchAllData();
+                              if (!error) {
+                                setSelectedMatchSource(prev => ({ ...prev, [m.id]: null }));
+                                if (labelEl) labelEl.value = '';
+                                fetchAllData();
+                              }
                             }}
                           >
                             Add Source
