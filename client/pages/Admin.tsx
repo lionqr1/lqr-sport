@@ -796,10 +796,60 @@ export default function Admin() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Matches Management</h2>
-                <Button onClick={() => setEditingItem('new')} className="bg-green-600 hover:bg-green-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Match
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    onClick={() => {
+                      const rows = matches.map(m => ({
+                        id: m.id,
+                        home_team: teams.find(t=>t.id===m.home_team_id)?.name || m.home_team_id,
+                        away_team: teams.find(t=>t.id===m.away_team_id)?.name || m.away_team_id,
+                        league: leagues.find(l=>l.id===m.league_id)?.name || m.league_id,
+                        match_time: m.match_time,
+                        publish_at: (m as any).publish_at || '',
+                        unpublish_at: (m as any).unpublish_at || ''
+                      }));
+                      download('matches.csv', toCSV(rows as any[], ['id','home_team','away_team','league','match_time','publish_at','unpublish_at']));
+                    }}
+                  >
+                    Export CSV
+                  </Button>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0]; if (!f) return;
+                        const rows = await parseCSV(f);
+                        const header = rows[0];
+                        const hHome = header.indexOf('home_team');
+                        const hAway = header.indexOf('away_team');
+                        const hLeague = header.indexOf('league');
+                        const hTime = header.indexOf('match_time');
+                        const hPub = header.indexOf('publish_at');
+                        const hUnpub = header.indexOf('unpublish_at');
+                        const nameToId = (name: string, list: {id:number, name:string}[]) => list.find(x => x.name === name)?.id || Number(name);
+                        const payload = rows.slice(1).map(r => ({
+                          home_team_id: nameToId(r[hHome], teams),
+                          away_team_id: nameToId(r[hAway], teams),
+                          league_id: nameToId(r[hLeague], leagues),
+                          match_time: new Date(r[hTime]).toISOString(),
+                          ...(hPub>-1 && r[hPub] ? { publish_at: new Date(r[hPub]).toISOString() } : {}),
+                          ...(hUnpub>-1 && r[hUnpub] ? { unpublish_at: new Date(r[hUnpub]).toISOString() } : {}),
+                        })).filter(x => x.home_team_id && x.away_team_id && x.league_id && x.match_time);
+                        if (payload.length) { await supabase.from('matches').insert(payload as any[]); fetchAllData(); }
+                        e.currentTarget.value = '';
+                      }}
+                    />
+                    <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">Import CSV</Button>
+                  </label>
+                  <Button onClick={() => setEditingItem('new')} className="bg-green-600 hover:bg-green-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Match
+                  </Button>
+                </div>
               </div>
 
               {editingItem && renderForm('Match', editingItem === 'new' ? null : editingItem)}
