@@ -69,7 +69,7 @@ export interface MatchSource {
   id: number;
   match_id: number;
   source_type: SourceType;
-  source_id: number;
+  source_id: string | number;
   label?: string;
   created_at: string;
 }
