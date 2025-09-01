@@ -241,8 +241,8 @@ export default function Index() {
       addToFavorites(favoriteItem);
     }
 
-    // Force re-render by updating a counter or timestamp
-    setCurrentSection(prev => prev);
+    // Force immediate UI update
+    setFavoritesVersion(v => v + 1);
   }, []);
 
   const checkFavoriteStatus = useCallback((id: number, type: string) => {
