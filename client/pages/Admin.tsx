@@ -734,10 +734,26 @@ export default function Admin() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Teams Management</h2>
-                <Button onClick={() => setEditingItem('new')} className="bg-green-600 hover:bg-green-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Team
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700" onClick={() => download('teams.csv', toCSV(teams, ['id','name','logo_url','created_at']))}>Export CSV</Button>
+                  <label className="inline-flex items-center">
+                    <input type="file" accept=".csv" className="hidden" onChange={async (e) => {
+                      const f = e.target.files?.[0]; if (!f) return;
+                      const rows = await parseCSV(f);
+                      const header = rows[0];
+                      const idxName = header.indexOf('name');
+                      const idxLogo = header.indexOf('logo_url');
+                      const payload = rows.slice(1).map(r => ({ name: r[idxName], logo_url: r[idxLogo] || null })).filter(r => r.name);
+                      if (payload.length) { await supabase.from('teams').insert(payload); fetchAllData(); }
+                      e.currentTarget.value = '';
+                    }} />
+                    <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">Import CSV</Button>
+                  </label>
+                  <Button onClick={() => { setEditingItem('new'); setFormData({}); }} className="bg-green-600 hover:bg-green-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Team
+                  </Button>
+                </div>
               </div>
               {editingItem && renderForm('Team', editingItem === 'new' ? null : editingItem)}
               {renderDataTable(teams, 'Team', 'teams')}
