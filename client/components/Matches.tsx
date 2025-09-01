@@ -203,17 +203,20 @@ export default function Matches({ onWatch }: MatchesProps) {
             </div>
 
             {/* Mobile meta */}
-            <div className="sm:hidden mt-3 flex items-center justify-between text-sm text-gray-300">
-              <div className="flex items-center gap-1">
+            <div className="sm:hidden mt-3 flex items-center justify-between text-sm text-gray-300 w-full">
+              <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                <span>{formatTime(match.time)}</span>
+                <span>{formatET(match.time)}</span>
               </div>
-              {match.league && (
-                <Badge className="bg-purple-600 text-white flex items-center gap-1">
-                  <Trophy className="w-3 h-3" />
-                  {match.league.name}
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                <Badge className={`${countdownFor(match.time)==='LIVE' ? 'bg-red-600' : 'bg-blue-600'} text-white`}>{countdownFor(match.time)}</Badge>
+                {match.league && (
+                  <Badge className="bg-purple-600 text-white flex items-center gap-1">
+                    <Trophy className="w-3 h-3" />
+                    {match.league.name}
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
