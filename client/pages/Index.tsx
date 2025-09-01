@@ -807,6 +807,7 @@ export default function Index() {
         onClose={closeVideoPlayer}
         streamUrl={currentStreamUrl}
         title={currentStreamTitle}
+        altSources={altSources}
       />
     </div>
   );
