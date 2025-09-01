@@ -131,7 +131,10 @@ export default function Matches({ onWatch }: MatchesProps) {
 
   return (
     <div className="space-y-4">
-      {vmatches.map(match => (
+      {vmatches.map(match => {
+        const channelsCount = match.sources.filter(s=>s.type==='channel').length;
+        const streamsCount = match.sources.filter(s=>s.type==='stream').length;
+        return (
         <Card key={match.id} className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
             <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -180,6 +183,7 @@ export default function Matches({ onWatch }: MatchesProps) {
                 <Select
                   value={selectedSource[match.id]?.toString()}
                   onValueChange={(val) => setSelectedSource(prev => ({ ...prev, [match.id]: Number(val) }))}
+                  disabled={match.sources.length===0}
                 >
                   <SelectTrigger className="w-[180px] bg-gray-700 border-gray-600 text-white">
                     <SelectValue placeholder={match.sources[0] ? `Source: ${match.sources[0].label}` : 'No sources'} />
@@ -211,18 +215,16 @@ export default function Matches({ onWatch }: MatchesProps) {
                   className="bg-orange-600 hover:bg-orange-700 text-white"
                 >
                   <Play className="w-4 h-4 mr-2" />
-                  Watch
+                  Watch Now
                 </Button>
               </div>
             </div>
 
-            {/* Mobile meta */}
-            <div className="sm:hidden mt-3 flex items-center justify-between text-sm text-gray-300 w-full">
+            {/* Mobile/Extra info */}
+            <div className="mt-3 flex items-center justify-between text-sm text-gray-300 w-full flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 <span>{formatET(match.time)}</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <Badge className={`${countdownFor(match.time)==='LIVE' ? 'bg-red-600' : 'bg-blue-600'} text-white`}>{countdownFor(match.time)}</Badge>
                 {match.league && (
                   <Badge className="bg-purple-600 text-white flex items-center gap-1">
@@ -231,10 +233,14 @@ export default function Matches({ onWatch }: MatchesProps) {
                   </Badge>
                 )}
               </div>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-gray-700 text-white">Channels: {channelsCount}</Badge>
+                <Badge className="bg-gray-700 text-white">Streams: {streamsCount}</Badge>
+              </div>
             </div>
           </CardContent>
         </Card>
-      ))}
+      );})}
     </div>
   );
 }
