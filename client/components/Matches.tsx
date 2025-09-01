@@ -76,11 +76,12 @@ export default function Matches({ onWatch }: MatchesProps) {
       const away = teamById.get(m.away_team_id)!;
       const league = leagueById.get(m.league_id) || null;
       const sources = (groupedSources[m.id] || []).map(src => {
+        const key: any = (src as any).source_id;
         if (src.source_type === 'channel') {
-          const ch = channelById.get(src.source_id);
+          const ch = channelById.get(key) || channelById.get(typeof key === 'string' ? Number(key) as any : String(key) as any);
           return ch ? { id: src.id, label: src.label || ch.name, url: ch.stream_url, name: ch.name, type: 'channel' as const } : null;
         } else {
-          const st = streamById.get(src.source_id);
+          const st = streamById.get(key) || streamById.get(typeof key === 'string' ? Number(key) as any : String(key) as any);
           return st ? { id: src.id, label: src.label || st.name, url: st.stream_url, name: st.name, type: 'stream' as const } : null;
         }
       }).filter(Boolean) as MatchViewModel['sources'];
