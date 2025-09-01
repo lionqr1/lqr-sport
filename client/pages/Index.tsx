@@ -44,6 +44,12 @@ export default function Index() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Contact form state
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactSubmitting, setContactSubmitting] = useState(false);
+  const [contactStatus, setContactStatus] = useState<null | { type: 'success' | 'error'; text: string }>(null);
+
   // Video Player Modal states
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [currentStreamUrl, setCurrentStreamUrl] = useState('');
