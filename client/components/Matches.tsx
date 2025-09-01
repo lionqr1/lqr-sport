@@ -70,7 +70,14 @@ export default function Matches({ onWatch }: MatchesProps) {
       return acc;
     }, {} as Record<number, MatchSource[]>);
 
-    return matches.map(m => {
+    return matches.filter((m:any) => {
+      const now = Date.now();
+      const pub = m.publish_at ? new Date(m.publish_at).getTime() : null;
+      const unpub = m.unpublish_at ? new Date(m.unpublish_at).getTime() : null;
+      if (pub && now < pub) return false;
+      if (unpub && now >= unpub) return false;
+      return true;
+    }).map(m => {
       const home = teamById.get(m.home_team_id)!;
       const away = teamById.get(m.away_team_id)!;
       const league = leagueById.get(m.league_id) || null;
