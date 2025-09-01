@@ -29,6 +29,13 @@ export default function Matches({ onWatch }: MatchesProps) {
   const [loading, setLoading] = useState(true);
   const [selectedSource, setSelectedSource] = useState<Record<number, number | undefined>>({});
 
+  // countdown tick (must be before any early returns)
+  const [nowTs, setNowTs] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
