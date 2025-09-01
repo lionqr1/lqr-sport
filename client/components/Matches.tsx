@@ -137,7 +137,7 @@ export default function Matches({ onWatch }: MatchesProps) {
                       <Users className="w-4 h-4 text-white" />
                     </div>
                   )}
-                  <span className="font-semibold text-white truncate max-w-[120px]">{match.home.name}</span>
+                  <span className="font-semibold text-white truncate max-w-[140px] sm:max-w-[180px]">{match.home.name}</span>
                 </div>
                 <span className="text-gray-400">vs</span>
                 <div className="flex items-center gap-2 min-w-0">
