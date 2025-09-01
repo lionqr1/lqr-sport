@@ -3,23 +3,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { exportFavorites, importFavorites, clearFavorites } from "@/lib/favorites";
-import { 
-  Download, 
-  Upload, 
-  Trash2, 
-  Save, 
-  Database, 
+import { exportFavorites, importFavorites, clearFavorites, getFavorites, removeFromFavorites, type FavoriteItem } from "@/lib/favorites";
+import {
+  Download,
+  Upload,
+  Trash2,
+  Save,
+  Database,
   Settings as SettingsIcon,
   Heart,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Play,
+  Users,
+  Radio as RadioIcon
 } from "lucide-react";
 
 export default function Settings() {
   const [importData, setImportData] = useState("");
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+
+  const loadFavorites = () => setFavorites(getFavorites());
+  useEffect(() => { loadFavorites(); }, []);
 
   const handleExport = () => {
     try {
