@@ -39,3 +39,44 @@ export interface Update {
   message: string;
   created_at: string;
 }
+
+export interface Team {
+  id: number;
+  name: string;
+  logo_url?: string;
+  created_at: string;
+}
+
+export interface League {
+  id: number;
+  name: string;
+  logo_url?: string;
+  created_at: string;
+}
+
+export interface Match {
+  id: number;
+  home_team_id: number;
+  away_team_id: number;
+  league_id: number;
+  match_time: string;
+  created_at: string;
+}
+
+export type SourceType = 'channel' | 'stream';
+
+export interface MatchSource {
+  id: number;
+  match_id: number;
+  source_type: SourceType;
+  source_id: number;
+  label?: string;
+  created_at: string;
+}
+
+export interface Message {
+  id: number;
+  email: string;
+  content: string;
+  created_at: string;
+}
