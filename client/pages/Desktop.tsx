@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VideoPlayerModal from "@/components/VideoPlayerModal";
 import LoadingScreen from "@/components/LoadingScreen";
+import Matches from "@/components/Matches";
 import { supabase, type Channel, type LiveTV, type Radio, type Update } from "@/lib/supabase";
 import { 
   Play, 
@@ -47,6 +48,7 @@ export default function Desktop() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [currentStreamUrl, setCurrentStreamUrl] = useState('');
   const [currentStreamTitle, setCurrentStreamTitle] = useState('');
+  const [altSources, setAltSources] = useState<{ url: string; label?: string }[]>([]);
 
   // Media player states
   const [isPlaying, setIsPlaying] = useState(false);
@@ -185,9 +187,10 @@ export default function Desktop() {
     setIsMuted(!isMuted);
   };
 
-  const openVideoPlayer = (url: string, title: string) => {
+  const openVideoPlayer = (url: string, title: string, alts: { url: string; label?: string }[] = []) => {
     setCurrentStreamUrl(url);
     setCurrentStreamTitle(title);
+    setAltSources(alts);
     setIsVideoModalOpen(true);
   };
 
@@ -195,6 +198,7 @@ export default function Desktop() {
     setIsVideoModalOpen(false);
     setCurrentStreamUrl('');
     setCurrentStreamTitle('');
+    setAltSources([]);
   };
 
   const filteredChannels = channels.filter(channel =>
@@ -287,7 +291,7 @@ export default function Desktop() {
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <Tabs defaultValue="streams" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8 bg-gray-800">
+          <TabsList className="grid w-full grid-cols-6 mb-8 bg-gray-800">
             <TabsTrigger value="streams" className="data-[state=active]:bg-orange-600">
               <Play className="w-4 h-4 mr-2" />
               Haitian Streams
@@ -299,6 +303,10 @@ export default function Desktop() {
             <TabsTrigger value="radio" className="data-[state=active]:bg-orange-600">
               <RadioIcon className="w-4 h-4 mr-2" />
               Radio Stations
+            </TabsTrigger>
+            <TabsTrigger value="matches" className="data-[state=active]:bg-orange-600">
+              <Users className="w-4 h-4 mr-2" />
+              Matches
             </TabsTrigger>
             <TabsTrigger value="updates" className="data-[state=active]:bg-orange-600">
               <Clock className="w-4 h-4 mr-2" />
@@ -594,6 +602,14 @@ export default function Desktop() {
             </div>
           </TabsContent>
 
+          {/* Matches Tab */}
+          <TabsContent value="matches">
+            <div className="space-y-6">
+              <h2 className="text-3xl font-bold">Matches</h2>
+              <Matches onWatch={openVideoPlayer} />
+            </div>
+          </TabsContent>
+
           {/* Updates Tab */}
           <TabsContent value="updates">
             <div className="space-y-6">
@@ -729,6 +745,7 @@ export default function Desktop() {
         streamUrl={currentStreamUrl}
         title={currentStreamTitle}
         platform="desktop"
+        altSources={altSources}
       />
     </div>
   );
