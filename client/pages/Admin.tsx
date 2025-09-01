@@ -102,16 +102,66 @@ export default function Admin() {
     }
   };
 
+  // Helpers for CSV
+  const toCSV = (rows: any[], columns: string[]) => {
+    const escape = (v: any) => {
+      const s = v == null ? '' : String(v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    return [columns.join(','), ...rows.map(r => columns.map(c => escape(r[c])).join(','))].join('\n');
+  };
+
+  const download = (filename: string, text: string) => {
+    const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const parseCSV = async (file: File): Promise<string[][]> => {
+    const text = await file.text();
+    return text.split(/\r?\n/).filter(Boolean).map(line => {
+      const result: string[] = [];
+      let cur = '', inQuotes = false;
+      for (let i=0;i<line.length;i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+          else inQuotes = !inQuotes;
+        } else if (ch === ',' && !inQuotes) { result.push(cur); cur=''; }
+        else cur += ch;
+      }
+      result.push(cur);
+      return result.map(s => s.trim());
+    });
+  };
+
+  // Safe insert/update with optional columns (publish_at/unpublish_at)
+  const safeInsert = async (table: string, data: any) => {
+    const { error } = await supabase.from(table).insert([data]);
+    if (error && /column\s+\"?(publish_at|unpublish_at)\"?/i.test(error.message)) {
+      const { publish_at, unpublish_at, ...rest } = data;
+      return supabase.from(table).insert([rest]);
+    }
+    return { error };
+  };
+
+  const safeUpdate = async (table: string, id: number, data: any) => {
+    const { error } = await supabase.from(table).update(data).eq('id', id);
+    if (error && /column\s+\"?(publish_at|unpublish_at)\"?/i.test(error.message)) {
+      const { publish_at, unpublish_at, ...rest } = data;
+      return supabase.from(table).update(rest).eq('id', id);
+    }
+    return { error };
+  };
+
   // CRUD Operations
   const handleCreate = async (table: string, data: any) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from(table)
-        .insert([data]);
-      
+      const { error } = await safeInsert(table, data);
       if (error) throw error;
-      
       await fetchAllData();
       setEditingItem(null);
       setFormData({});
@@ -125,13 +175,8 @@ export default function Admin() {
   const handleUpdate = async (table: string, id: number, data: any) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from(table)
-        .update(data)
-        .eq('id', id);
-      
+      const { error } = await safeUpdate(table, id, data);
       if (error) throw error;
-      
       await fetchAllData();
       setEditingItem(null);
       setFormData({});
