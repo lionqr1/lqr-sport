@@ -43,7 +43,7 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
         };
         videoRef.current.onerror = () => {
           setIsLoading(false);
-          if (sourceIndex < altSources.length - 1) {
+          if (sourceIndex < sources.length - 1) {
             setSourceIndex((i) => i + 1);
           }
         };
@@ -60,7 +60,7 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
         });
         hls.on(window.Hls.Events.ERROR, () => {
           setIsLoading(false);
-          if (sourceIndex < altSources.length - 1) {
+          if (sourceIndex < sources.length - 1) {
             setSourceIndex((i) => i + 1);
           }
         });
