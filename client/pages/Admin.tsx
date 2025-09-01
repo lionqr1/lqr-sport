@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import AdminLogin from "@/components/AdminLogin";
 import LoadingScreen from "@/components/LoadingScreen";
+import { useToast } from "@/hooks/use-toast";
 import { supabase, type Channel, type LiveTV, type Radio, type Update, type Team, type League, type Match, type MatchSource, type Message } from "@/lib/supabase";
 import {
   Shield,
@@ -37,6 +38,7 @@ import { Command, CommandInput, CommandList, CommandGroup, CommandItem, CommandE
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
 
@@ -52,6 +54,7 @@ export default function Admin() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMatchSource, setSelectedMatchSource] = useState<Record<number, { type: 'channel' | 'stream'; id: number; name: string } | null>>({});
   const [pickerOpen, setPickerOpen] = useState<Record<number, boolean>>({});
+  const [addingSourceBusy, setAddingSourceBusy] = useState<Record<number, boolean>>({});
 
   // Form states
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -930,21 +933,30 @@ export default function Admin() {
                           <Button
                             size="sm"
                             className="bg-green-600 hover:bg-green-700"
+                            disabled={!!addingSourceBusy[m.id]}
                             onClick={async () => {
                               const labelEl = document.getElementById(`label-${m.id}`) as HTMLInputElement | null;
                               const sel = selectedMatchSource[m.id];
-                              if (!sel) return;
+                              if (!sel) {
+                                toast({ title: 'Pick a source first', description: 'Search and select a channel or stream.' });
+                                return;
+                              }
                               const payload: any = { match_id: m.id, source_type: sel.type, source_id: sel.id };
                               if (labelEl && labelEl.value) payload.label = labelEl.value;
+                              setAddingSourceBusy(prev => ({ ...prev, [m.id]: true }));
                               const { error } = await supabase.from('match_sources').insert([payload]);
-                              if (!error) {
+                              setAddingSourceBusy(prev => ({ ...prev, [m.id]: false }));
+                              if (error) {
+                                toast({ title: 'Failed to add source', description: error.message });
+                              } else {
+                                toast({ title: 'Source added', description: `${sel.name} was linked to this match.` });
                                 setSelectedMatchSource(prev => ({ ...prev, [m.id]: null }));
                                 if (labelEl) labelEl.value = '';
                                 fetchAllData();
                               }
                             }}
                           >
-                            Add Source
+                            {addingSourceBusy[m.id] ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add Source'}
                           </Button>
                         </div>
 
