@@ -399,6 +399,22 @@ export default function Admin() {
                   className="bg-gray-700 border-gray-600 text-white rounded p-2"
                 />
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="datetime-local"
+                  value={currentData.publish_at ? new Date(currentData.publish_at).toISOString().slice(0,16) : ''}
+                  onChange={(e) => setFormData({ ...currentData, publish_at: new Date(e.target.value).toISOString() })}
+                  placeholder="Publish At (optional)"
+                  className="bg-gray-700 border-gray-600 text-white rounded p-2"
+                />
+                <input
+                  type="datetime-local"
+                  value={currentData.unpublish_at ? new Date(currentData.unpublish_at).toISOString().slice(0,16) : ''}
+                  onChange={(e) => setFormData({ ...currentData, unpublish_at: new Date(e.target.value).toISOString() })}
+                  placeholder="Unpublish At (optional)"
+                  className="bg-gray-700 border-gray-600 text-white rounded p-2"
+                />
+              </div>
             </>
           )}
 
