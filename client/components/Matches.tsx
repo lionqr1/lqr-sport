@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, Play, Trophy, Users, Calendar } from "lucide-react";
+import { Loader2, Play, Users, Calendar } from "lucide-react";
 import { supabase, type Team, type League, type Match, type MatchSource, type Channel, type LiveTV } from "@/lib/supabase";
 
 interface MatchesProps {
