@@ -148,7 +148,7 @@ export default function Matches({ onWatch }: MatchesProps) {
                       <Users className="w-4 h-4 text-white" />
                     </div>
                   )}
-                  <span className="font-semibold text-white truncate max-w-[120px]">{match.away.name}</span>
+                  <span className="font-semibold text-white truncate max-w-[140px] sm:max-w-[180px]">{match.away.name}</span>
                 </div>
               </div>
 
