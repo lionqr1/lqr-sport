@@ -488,7 +488,7 @@ export default function Admin() {
 
       <main className="max-w-7xl mx-auto p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-8 mb-8 bg-gray-800">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-8 bg-gray-800">
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-orange-600">
               <BarChart3 className="w-4 h-4 mr-2" />
               Dashboard
