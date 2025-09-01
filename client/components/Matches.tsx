@@ -7,7 +7,7 @@ import { Loader2, Play, Trophy, Users, Calendar } from "lucide-react";
 import { supabase, type Team, type League, type Match, type MatchSource, type Channel, type LiveTV } from "@/lib/supabase";
 
 interface MatchesProps {
-  onWatch: (url: string, title: string) => void;
+  onWatch: (url: string, title: string, altSources?: { url: string; label?: string }[]) => void;
 }
 
 interface MatchViewModel {
