@@ -56,8 +56,8 @@ export default function Matches({ onWatch }: MatchesProps) {
   const vmatches = useMemo<MatchViewModel[]>(() => {
     const teamById = new Map(teams.map(t => [t.id, t] as const));
     const leagueById = new Map(leagues.map(l => [l.id, l] as const));
-    const channelById = new Map(channels.map(c => [c.id, c] as const));
-    const streamById = new Map(streams.map(s => [s.id, s] as const));
+    const channelById = new Map(channels.map(c => [c.id as any, c] as const));
+    const streamById = new Map(streams.map(s => [s.id as any, s] as const));
 
     const groupedSources = matchSources.reduce((acc, src) => {
       (acc[src.match_id] ||= []).push(src);
