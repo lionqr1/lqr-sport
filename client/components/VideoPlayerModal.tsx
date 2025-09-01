@@ -290,6 +290,20 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
 
           {/* Right Controls */}
           <div className="flex items-center space-x-2">
+            {/* Source selector */}
+            {sources.length > 1 && (
+              <div className="relative">
+                <select
+                  value={String(sourceIndex)}
+                  onChange={(e) => setSourceIndex(Number(e.target.value))}
+                  className="bg-gray-700 border border-gray-600 text-white text-sm rounded px-2 py-1"
+                >
+                  {sources.map((s, i) => (
+                    <option key={i} value={i}>Source {i+1}{s.label ? ` - ${s.label}` : ''}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <Button
               onClick={toggleFullscreen}
               variant="ghost"
