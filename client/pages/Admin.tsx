@@ -737,25 +737,28 @@ export default function Admin() {
                         </div>
 
                         {/* Add source */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
                           <select id={`type-${m.id}`} className="bg-gray-700 border-gray-600 text-white rounded p-2">
                             <option value="channel">Channel</option>
                             <option value="stream">Stream</option>
                           </select>
-                          <select id={`source-${m.id}`} className="bg-gray-700 border-gray-600 text-white rounded p-2 col-span-2">
+                          <select id={`source-${m.id}`} className="bg-gray-700 border-gray-600 text-white rounded p-2 md:col-span-2">
                             {[...channels.map(c => ({ id: c.id, name: c.name, type: 'channel' as const })), ...liveTV.map(s => ({ id: s.id, name: s.name, type: 'stream' as const }))].map(opt => (
                               <option key={`${opt.type}-${opt.id}`} value={`${opt.type}:${opt.id}`}>{opt.name} ({opt.type})</option>
                             ))}
                           </select>
+                          <input id={`label-${m.id}`} placeholder="Label (optional)" className="bg-gray-700 border-gray-600 text-white rounded p-2" />
                           <Button
                             size="sm"
                             className="bg-green-600 hover:bg-green-700"
                             onClick={async () => {
-                              const typeEl = document.getElementById(`type-${m.id}`) as HTMLSelectElement | null;
                               const srcEl = document.getElementById(`source-${m.id}`) as HTMLSelectElement | null;
-                              if (!typeEl || !srcEl) return;
+                              const labelEl = document.getElementById(`label-${m.id}`) as HTMLInputElement | null;
+                              if (!srcEl) return;
                               const [stype, sid] = srcEl.value.split(':');
-                              const { error } = await supabase.from('match_sources').insert([{ match_id: m.id, source_type: stype, source_id: Number(sid) }]);
+                              const payload: any = { match_id: m.id, source_type: stype, source_id: Number(sid) };
+                              if (labelEl && labelEl.value) payload.label = labelEl.value;
+                              const { error } = await supabase.from('match_sources').insert([payload]);
                               if (!error) fetchAllData();
                             }}
                           >
@@ -768,14 +771,17 @@ export default function Admin() {
                           {sources.length === 0 ? (
                             <p className="text-sm text-gray-500">No sources added yet.</p>
                           ) : (
-                            sources.map(s => (
-                              <div key={s.id} className="flex items-center justify-between bg-gray-700 rounded p-2">
-                                <span className="text-sm text-white">{s.source_type} #{s.source_id}</span>
-                                <Button size="sm" variant="outline" onClick={() => handleDelete('match_sources', s.id)} className="border-red-600 text-red-400 hover:bg-red-900">
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            ))
+                            sources.map(s => {
+                              const name = s.source_type === 'channel' ? channels.find(c => c.id === s.source_id)?.name : liveTV.find(v => v.id === s.source_id)?.name;
+                              return (
+                                <div key={s.id} className="flex items-center justify-between bg-gray-700 rounded p-2">
+                                  <span className="text-sm text-white">{s.label || name || `${s.source_type} #${s.source_id}`}</span>
+                                  <Button size="sm" variant="outline" onClick={() => handleDelete('match_sources', s.id)} className="border-red-600 text-red-400 hover:bg-red-900">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              );
+                            })
                           )}
                         </div>
                       </CardContent>
