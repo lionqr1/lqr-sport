@@ -94,9 +94,31 @@ export default function Matches({ onWatch }: MatchesProps) {
     );
   }
 
-  const formatTime = (iso: string) => {
+  const [nowTs, setNowTs] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const formatET = (iso: string) => {
     const d = new Date(iso);
-    return d.toLocaleString();
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true
+    }).format(d) + ' ET';
+  };
+
+  const countdownFor = (iso: string) => {
+    const target = new Date(iso).getTime();
+    const diff = target - nowTs;
+    if (diff <= 0) return 'LIVE';
+    const s = Math.floor(diff / 1000);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (h > 0) return `${h}h ${m}m ${sec}s`;
+    if (m > 0) return `${m}m ${sec}s`;
+    return `${sec}s`;
   };
 
   return (
