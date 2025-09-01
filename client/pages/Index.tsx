@@ -580,11 +580,7 @@ export default function Index() {
                               if (currentRadio?.id === station.id) {
                                 toggleRadio();
                               } else {
-                                setCurrentRadio(station);
-                                if (!isPlaying) {
-                                  // Will start playing when currentRadio changes
-                                  setTimeout(() => toggleRadio(), 100);
-                                }
+                                playRadioFor(station);
                               }
                             }}
                             className={`flex-1 transition-colors ${
