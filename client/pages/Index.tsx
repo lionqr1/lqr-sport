@@ -206,9 +206,12 @@ export default function Index() {
   };
 
   // Video player functions
-  const openVideoPlayer = useCallback((url: string, title: string) => {
+  const [altSources, setAltSources] = useState<{ url: string; label?: string }[]>([]);
+
+  const openVideoPlayer = useCallback((url: string, title: string, alts: { url: string; label?: string }[] = []) => {
     setCurrentStreamUrl(url);
     setCurrentStreamTitle(title);
+    setAltSources(alts);
     setIsVideoModalOpen(true);
   }, []);
 
