@@ -684,10 +684,11 @@ export default function Index() {
           </div>
         )}
 
-        {/* Favorites Section */}
-        {currentSection === 'favorites' && (
+        {/* Matches Section */}
+        {currentSection === 'matches' && (
           <div>
-            <Favorites onPlay={openVideoPlayer} />
+            <h2 className="text-xl md:text-2xl font-bold mb-4">Matches</h2>
+            <Matches onWatch={openVideoPlayer} />
           </div>
         )}
 
