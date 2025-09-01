@@ -323,7 +323,10 @@ export default function Index() {
         {currentSection === 'streams' && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl md:text-2xl font-bold">Haitian Streams</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl md:text-2xl font-bold">Haitian Streams</h2>
+                <Badge className="bg-gray-700 text-white">{liveTV.length} Streams</Badge>
+              </div>
               <Badge variant="secondary" className="bg-red-600 text-white">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></div>
                 LIVE
