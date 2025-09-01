@@ -218,6 +218,9 @@ export default function Index() {
     setCurrentStreamTitle('');
   }, []);
 
+  // Favorites render tick
+  const [favoritesVersion, setFavoritesVersion] = useState(0);
+
   // Favorites functions
   const toggleFavorite = useCallback((item: any, type: 'channel' | 'stream' | 'radio') => {
     const favoriteItem: FavoriteItem = {
