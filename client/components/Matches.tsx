@@ -156,7 +156,8 @@ export default function Matches({ onWatch }: MatchesProps) {
               <div className="hidden sm:flex items-center gap-3 text-sm text-gray-300">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>{formatTime(match.time)}</span>
+                  <span>{formatET(match.time)}</span>
+                  <Badge className={`${countdownFor(match.time)==='LIVE' ? 'bg-red-600' : 'bg-blue-600'} text-white`}>{countdownFor(match.time)}</Badge>
                 </div>
                 {match.league && (
                   <Badge className="bg-purple-600 text-white flex items-center gap-1">
