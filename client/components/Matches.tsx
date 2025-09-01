@@ -131,116 +131,88 @@ export default function Matches({ onWatch }: MatchesProps) {
 
   return (
     <div className="space-y-4">
-      {vmatches.map(match => {
-        const channelsCount = match.sources.filter(s=>s.type==='channel').length;
-        const streamsCount = match.sources.filter(s=>s.type==='stream').length;
-        return (
+      {vmatches.map(match => (
         <Card key={match.id} className="bg-gray-800 border-gray-700">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              {/* Teams */}
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="flex items-center gap-2 min-w-0">
-                  {match.home.logo_url ? (
-                    <img src={match.home.logo_url} alt={match.home.name} className="w-10 h-10 object-contain rounded shrink-0" />
-                  ) : (
-                    <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center">
-                      <Users className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                  <span className="font-semibold text-white truncate max-w-[140px] sm:max-w-[180px]">{match.home.name}</span>
-                </div>
-                <span className="text-gray-400">vs</span>
-                <div className="flex items-center gap-2 min-w-0">
-                  {match.away.logo_url ? (
-                    <img src={match.away.logo_url} alt={match.away.name} className="w-10 h-10 object-contain rounded shrink-0" />
-                  ) : (
-                    <div className="w-8 h-8 rounded bg-red-600 flex items-center justify-center">
-                      <Users className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                  <span className="font-semibold text-white truncate max-w-[140px] sm:max-w-[180px]">{match.away.name}</span>
-                </div>
+          <CardContent className="p-4 space-y-3">
+            {/* Top meta */}
+            <div className="flex items-center justify-between text-sm text-gray-300">
+              <div className="font-medium truncate">
+                {match.league ? match.league.name : 'Match'}
               </div>
-
-              {/* Meta */}
-              <div className="hidden sm:flex items-center gap-3 text-sm text-gray-300">
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  <span>{formatET(match.time)}</span>
-                  <Badge className={`${countdownFor(match.time)==='LIVE' ? 'bg-red-600' : 'bg-blue-600'} text-white`}>{countdownFor(match.time)}</Badge>
-                </div>
-                {match.league && (
-                  <Badge className="bg-purple-600 text-white flex items-center gap-1">
-                    <Trophy className="w-3 h-3" />
-                    {match.league.name}
-                  </Badge>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2">
-                <Select
-                  value={selectedSource[match.id]?.toString()}
-                  onValueChange={(val) => setSelectedSource(prev => ({ ...prev, [match.id]: Number(val) }))}
-                  disabled={match.sources.length===0}
-                >
-                  <SelectTrigger className="w-[180px] bg-gray-700 border-gray-600 text-white">
-                    <SelectValue placeholder={match.sources[0] ? `Source: ${match.sources[0].label}` : 'No sources'} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 text-white border-gray-700">
-                    {match.sources.map(src => (
-                      <SelectItem key={src.id} value={src.id.toString()}>
-                        {src.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  disabled={match.sources.length === 0}
-                  onClick={() => {
-                    const srcId = selectedSource[match.id] ?? match.sources[0]?.id;
-                    const ordered = [...match.sources];
-                    if (srcId) {
-                      ordered.sort((a,b) => (a.id===srcId? -1 : b.id===srcId? 1 : 0));
-                    }
-                    const primary = ordered[0];
-                    if (primary) {
-                      const title = `${match.home.name} vs ${match.away.name} ${match.league ? `- ${match.league.name}` : ''}`.trim();
-                      const alts = ordered.map(s => ({ url: s.url, label: s.label }))
-                        .slice(1);
-                      onWatch(primary.url, title, alts);
-                    }
-                  }}
-                  className="bg-orange-600 hover:bg-orange-700 text-white"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Watch Now
-                </Button>
-              </div>
-            </div>
-
-            {/* Mobile/Extra info */}
-            <div className="mt-3 flex items-center justify-between text-sm text-gray-300 w-full flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 <span>{formatET(match.time)}</span>
-                <Badge className={`${countdownFor(match.time)==='LIVE' ? 'bg-red-600' : 'bg-blue-600'} text-white`}>{countdownFor(match.time)}</Badge>
-                {match.league && (
-                  <Badge className="bg-purple-600 text-white flex items-center gap-1">
-                    <Trophy className="w-3 h-3" />
-                    {match.league.name}
-                  </Badge>
+              </div>
+            </div>
+
+            {/* Teams */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {match.home.logo_url ? (
+                  <img src={match.home.logo_url} alt={match.home.name} className="w-12 h-12 object-contain rounded shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded bg-blue-600 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                )}
+                <span className="font-semibold text-white truncate">{match.home.name}</span>
+              </div>
+              <span className="text-gray-400 font-semibold">VS</span>
+              <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
+                <span className="font-semibold text-white truncate text-right">{match.away.name}</span>
+                {match.away.logo_url ? (
+                  <img src={match.away.logo_url} alt={match.away.name} className="w-12 h-12 object-contain rounded shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded bg-red-600 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <Badge className="bg-gray-700 text-white">Channels: {channelsCount}</Badge>
-                <Badge className="bg-gray-700 text-white">Streams: {streamsCount}</Badge>
-              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select
+                value={selectedSource[match.id]?.toString()}
+                onValueChange={(val) => setSelectedSource(prev => ({ ...prev, [match.id]: Number(val) }))}
+                disabled={match.sources.length===0}
+              >
+                <SelectTrigger className="w-[180px] bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder={match.sources[0] ? `Source: ${match.sources[0].label}` : 'No sources'} />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 text-white border-gray-700">
+                  {match.sources.map(src => (
+                    <SelectItem key={src.id} value={src.id.toString()}>
+                      {src.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                disabled={match.sources.length === 0}
+                onClick={() => {
+                  const srcId = selectedSource[match.id] ?? match.sources[0]?.id;
+                  const ordered = [...match.sources];
+                  if (srcId) {
+                    ordered.sort((a,b) => (a.id===srcId? -1 : b.id===srcId? 1 : 0));
+                  }
+                  const primary = ordered[0];
+                  if (primary) {
+                    const title = `${match.home.name} vs ${match.away.name} ${match.league ? `- ${match.league.name}` : ''}`.trim();
+                    const alts = ordered.map(s => ({ url: s.url, label: s.label }))
+                      .slice(1);
+                    onWatch(primary.url, title, alts);
+                  }
+                }}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Watch Now
+              </Button>
             </div>
           </CardContent>
         </Card>
-      );})}
+      ))}
     </div>
   );
 }
