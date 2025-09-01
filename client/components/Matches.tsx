@@ -27,7 +27,7 @@ export default function Matches({ onWatch }: MatchesProps) {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [streams, setStreams] = useState<LiveTV[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSource, setSelectedSource] = useState<Record<number, number | undefined>>({});
+  const [pickerOpen, setPickerOpen] = useState<null | { matchId: number; title: string; sources: { id: number; label: string; url: string; name: string; type: 'channel' | 'stream' }[] }>(null);
 
 
   useEffect(() => {
