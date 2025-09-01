@@ -522,7 +522,7 @@ export default function Admin() {
               Updates
             </TabsTrigger>
             <TabsTrigger value="messages" className="data-[state=active]:bg-orange-600">
-              <Mails className="w-4 h-4 mr-2" />
+              <Mail className="w-4 h-4 mr-2" />
               Messages
             </TabsTrigger>
           </TabsList>
