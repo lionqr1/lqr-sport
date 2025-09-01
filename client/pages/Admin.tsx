@@ -617,7 +617,7 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">TV Channels Management</h2>
                 <Button
-                  onClick={() => setEditingItem('new')}
+                  onClick={() => { setEditingItem('new'); setFormData({}); }}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -636,7 +636,7 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Live Streams Management</h2>
                 <Button
-                  onClick={() => setEditingItem('new')}
+                  onClick={() => { setEditingItem('new'); setFormData({}); }}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -655,7 +655,7 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Radio Stations Management</h2>
                 <Button
-                  onClick={() => setEditingItem('new')}
+                  onClick={() => { setEditingItem('new'); setFormData({}); }}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -798,7 +798,7 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Updates Management</h2>
                 <Button
-                  onClick={() => setEditingItem('new')}
+                  onClick={() => { setEditingItem('new'); setFormData({}); }}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Plus className="w-4 h-4 mr-2" />
