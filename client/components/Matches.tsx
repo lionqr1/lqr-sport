@@ -101,12 +101,6 @@ export default function Matches({ onWatch }: MatchesProps) {
     );
   }
 
-  const [nowTs, setNowTs] = useState(Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNowTs(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
   const formatET = (iso: string) => {
     const d = new Date(iso);
     return new Intl.DateTimeFormat('en-US', {
