@@ -128,7 +128,7 @@ export default function Matches({ onWatch }: MatchesProps) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               {/* Teams */}
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div className="flex items-center gap-2 min-w-0">
                   {match.home.logo_url ? (
                     <img src={match.home.logo_url} alt={match.home.name} className="w-8 h-8 object-contain rounded" />
