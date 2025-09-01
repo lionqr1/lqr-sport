@@ -25,7 +25,8 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
   const [isLoading, setIsLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [sourceIndex, setSourceIndex] = useState(0);
-  const currentUrl = (altSources[sourceIndex]?.url) || streamUrl;
+  const sources = [{ url: streamUrl, label: altSources[0]?.label || 'Source 1' }, ...altSources];
+  const currentUrl = sources[sourceIndex]?.url || streamUrl;
 
   useEffect(() => {
     if (isOpen && videoRef.current && currentUrl) {
