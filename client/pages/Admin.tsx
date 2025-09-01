@@ -29,7 +29,7 @@ import {
   Globe,
   Trophy,
   Calendar,
-  Mails
+  Mail
 } from "lucide-react";
 
 export default function Admin() {
