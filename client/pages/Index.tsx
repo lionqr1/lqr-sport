@@ -404,7 +404,10 @@ export default function Index() {
         {/* Channels Section */}
         {currentSection === 'channels' && (
           <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-4">TV Channels</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-xl md:text-2xl font-bold">TV Channels</h2>
+              <Badge className="bg-gray-700 text-white">{channels.length} Channels</Badge>
+            </div>
             
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
