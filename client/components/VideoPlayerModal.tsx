@@ -16,22 +16,41 @@ interface VideoPlayerModalProps {
   streamUrl: string;
   title: string;
   platform?: 'mobile' | 'desktop' | 'tv';
+  altSources?: { url: string; label?: string }[];
 }
 
-export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, platform = 'mobile' }: VideoPlayerModalProps) {
+export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, platform = 'mobile', altSources = [] }: VideoPlayerModalProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const currentUrl = (altSources[sourceIndex]?.url) || streamUrl;
 
   useEffect(() => {
-    if (isOpen && videoRef.current && streamUrl) {
+    if (isOpen && videoRef.current && currentUrl) {
       setIsLoading(true);
-      
-      // Check if HLS.js is available for m3u8 streams
-      if (streamUrl.includes('.m3u8') && window.Hls?.isSupported()) {
-        const hls = new window.Hls();
-        hls.loadSource(streamUrl);
+
+      let hls: any | null = null;
+      const attachListeners = () => {
+        if (!videoRef.current) return;
+        videoRef.current.onloadstart = () => setIsLoading(true);
+        videoRef.current.oncanplay = () => {
+          setIsLoading(false);
+          videoRef.current?.play();
+          setIsPlaying(true);
+        };
+        videoRef.current.onerror = () => {
+          setIsLoading(false);
+          if (sourceIndex < altSources.length - 1) {
+            setSourceIndex((i) => i + 1);
+          }
+        };
+      };
+
+      if (currentUrl.includes('.m3u8') && window.Hls?.isSupported()) {
+        hls = new window.Hls();
+        hls.loadSource(currentUrl);
         hls.attachMedia(videoRef.current);
         hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
           setIsLoading(false);
@@ -40,20 +59,25 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
         });
         hls.on(window.Hls.Events.ERROR, () => {
           setIsLoading(false);
+          if (sourceIndex < altSources.length - 1) {
+            setSourceIndex((i) => i + 1);
+          }
         });
       } else {
         // Direct video stream
-        videoRef.current.src = streamUrl;
-        videoRef.current.onloadstart = () => setIsLoading(true);
-        videoRef.current.oncanplay = () => {
-          setIsLoading(false);
-          videoRef.current?.play();
-          setIsPlaying(true);
-        };
-        videoRef.current.onerror = () => setIsLoading(false);
+        if (videoRef.current) {
+          videoRef.current.src = currentUrl;
+        }
+        attachListeners();
       }
+
+      return () => {
+        if (hls) {
+          try { hls.destroy(); } catch {}
+        }
+      };
     }
-  }, [isOpen, streamUrl]);
+  }, [isOpen, currentUrl, sourceIndex, altSources.length]);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -171,6 +195,7 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
     }
     setIsPlaying(false);
     setIsLoading(true);
+    setSourceIndex(0);
     setIsCustomFullscreen(false);
     setShowControls(true);
     if (controlsTimeoutRef.current) {
