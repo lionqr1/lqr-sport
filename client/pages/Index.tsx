@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import VideoPlayerModal from "@/components/VideoPlayerModal";
 import LoadingScreen from "@/components/LoadingScreen";
 import Settings from "@/components/Settings";
-import Favorites from "@/components/Favorites";
+import Matches from "@/components/Matches";
 import { addToFavorites, removeFromFavorites, isFavorite, type FavoriteItem } from "@/lib/favorites";
 import { supabase, type Channel, type LiveTV, type Radio, type Update } from "@/lib/supabase";
 import {
