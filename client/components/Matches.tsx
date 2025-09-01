@@ -155,36 +155,14 @@ export default function Matches({ onWatch }: MatchesProps) {
 
             {/* Actions */}
             <div className="flex items-center gap-2 flex-wrap">
-              <Select
-                value={selectedSource[match.id]?.toString()}
-                onValueChange={(val) => setSelectedSource(prev => ({ ...prev, [match.id]: Number(val) }))}
-                disabled={match.sources.length===0}
-              >
-                <SelectTrigger className="w-[180px] bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder={match.sources[0] ? `Source: ${match.sources[0].label}` : 'No sources'} />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 text-white border-gray-700">
-                  {match.sources.map(src => (
-                    <SelectItem key={src.id} value={src.id.toString()}>
-                      {src.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <Button
                 disabled={match.sources.length === 0}
                 onClick={() => {
-                  const srcId = selectedSource[match.id] ?? match.sources[0]?.id;
-                  const ordered = [...match.sources];
-                  if (srcId) {
-                    ordered.sort((a,b) => (a.id===srcId? -1 : b.id===srcId? 1 : 0));
-                  }
-                  const primary = ordered[0];
-                  if (primary) {
-                    const title = `${match.home.name} vs ${match.away.name} ${match.league ? `- ${match.league.name}` : ''}`.trim();
-                    const alts = ordered.map(s => ({ url: s.url, label: s.label }))
-                      .slice(1);
-                    onWatch(primary.url, title, alts);
+                  const title = `${match.home.name} vs ${match.away.name} ${match.league ? `- ${match.league.name}` : ''}`.trim();
+                  if (match.sources.length === 1) {
+                    onWatch(match.sources[0].url, title, []);
+                  } else {
+                    setPickerOpen({ matchId: match.id, title, sources: match.sources });
                   }
                 }}
                 className="bg-orange-600 hover:bg-orange-700 text-white"
