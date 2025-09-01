@@ -173,16 +173,24 @@ export default function Index() {
   };
 
   // Media player functions
+  const playRadioFor = (station: Radio) => {
+    if (!station?.live_url) return;
+    audio.src = station.live_url;
+    audio.play();
+    setIsPlaying(true);
+    setCurrentRadio(station);
+  };
+
   const toggleRadio = () => {
     if (!currentRadio?.live_url) return;
-
     if (isPlaying) {
       audio.pause();
+      setIsPlaying(false);
     } else {
       audio.src = currentRadio.live_url;
       audio.play();
+      setIsPlaying(true);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const toggleMute = () => {
