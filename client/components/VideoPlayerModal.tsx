@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  X, 
-  Play, 
-  Pause, 
-  Volume2, 
-  VolumeX, 
-  Maximize, 
-  ArrowLeft 
+import {
+  X,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  ArrowLeft,
 } from "lucide-react";
 
 interface VideoPlayerModalProps {
@@ -15,17 +15,27 @@ interface VideoPlayerModalProps {
   onClose: () => void;
   streamUrl: string;
   title: string;
-  platform?: 'mobile' | 'desktop' | 'tv';
+  platform?: "mobile" | "desktop" | "tv";
   altSources?: { url: string; label?: string }[];
 }
 
-export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, platform = 'mobile', altSources = [] }: VideoPlayerModalProps) {
+export default function VideoPlayerModal({
+  isOpen,
+  onClose,
+  streamUrl,
+  title,
+  platform = "mobile",
+  altSources = [],
+}: VideoPlayerModalProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [sourceIndex, setSourceIndex] = useState(0);
-  const sources = [{ url: streamUrl, label: altSources[0]?.label || 'Source 1' }, ...altSources];
+  const sources = [
+    { url: streamUrl, label: altSources[0]?.label || "Source 1" },
+    ...altSources,
+  ];
   const currentUrl = sources[sourceIndex]?.url || streamUrl;
 
   useEffect(() => {
@@ -49,7 +59,7 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
         };
       };
 
-      if (currentUrl.includes('.m3u8') && window.Hls?.isSupported()) {
+      if (currentUrl.includes(".m3u8") && window.Hls?.isSupported()) {
         hls = new window.Hls();
         hls.loadSource(currentUrl);
         hls.attachMedia(videoRef.current);
@@ -74,7 +84,9 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
 
       return () => {
         if (hls) {
-          try { hls.destroy(); } catch {}
+          try {
+            hls.destroy();
+          } catch {}
         }
       };
     }
@@ -135,8 +147,8 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
       }
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeave);
 
     // Initially hide controls after delay in fullscreen
     if (isCustomFullscreen || document.fullscreenElement) {
@@ -146,8 +158,8 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
         controlsTimeoutRef.current = null;
@@ -166,10 +178,11 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
 
     // Try native fullscreen for desktop browsers
     if (!document.fullscreenElement) {
-      const requestFullscreen = videoRef.current.requestFullscreen ||
-                               videoRef.current.webkitRequestFullscreen ||
-                               videoRef.current.mozRequestFullScreen ||
-                               videoRef.current.msRequestFullscreen;
+      const requestFullscreen =
+        videoRef.current.requestFullscreen ||
+        videoRef.current.webkitRequestFullscreen ||
+        videoRef.current.mozRequestFullScreen ||
+        videoRef.current.msRequestFullscreen;
       if (requestFullscreen) {
         requestFullscreen.call(videoRef.current).catch(() => {
           // Fallback to custom fullscreen if native fails
@@ -179,10 +192,11 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
         setIsCustomFullscreen(true);
       }
     } else {
-      const exitFullscreen = document.exitFullscreen ||
-                             document.webkitExitFullscreen ||
-                             document.mozCancelFullScreen ||
-                             document.msExitFullscreen;
+      const exitFullscreen =
+        document.exitFullscreen ||
+        document.webkitExitFullscreen ||
+        document.mozCancelFullScreen ||
+        document.msExitFullscreen;
       if (exitFullscreen) {
         exitFullscreen.call(document);
       }
@@ -192,7 +206,7 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
   const handleClose = () => {
     if (videoRef.current) {
       videoRef.current.pause();
-      videoRef.current.src = '';
+      videoRef.current.src = "";
     }
     setIsPlaying(false);
     setIsLoading(true);
@@ -209,21 +223,30 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 bg-black flex flex-col items-center justify-center ${
-      isCustomFullscreen ? 'z-[99999] p-0' : 'z-[9999] bg-opacity-95 p-4'
-    }`}>
+    <div
+      className={`fixed inset-0 bg-black flex flex-col items-center justify-center ${
+        isCustomFullscreen ? "z-[99999] p-0" : "z-[9999] bg-opacity-95 p-4"
+      }`}
+    >
       {/* Video Player */}
-      <div className={`flex flex-col ${
-        isCustomFullscreen ? 'w-full h-full' :
-        platform === 'desktop' ? 'w-full max-w-2xl' : 'w-full max-w-4xl'
-      }`}>
-        <div className={`relative bg-black overflow-hidden ${
-          isCustomFullscreen ? 'flex-1' : 'aspect-video rounded-lg mb-4'
-        }`}>
+      <div
+        className={`flex flex-col ${
+          isCustomFullscreen
+            ? "w-full h-full"
+            : platform === "desktop"
+              ? "w-full max-w-2xl"
+              : "w-full max-w-4xl"
+        }`}
+      >
+        <div
+          className={`relative bg-black overflow-hidden ${
+            isCustomFullscreen ? "flex-1" : "aspect-video rounded-lg mb-4"
+          }`}
+        >
           <video
             ref={videoRef}
             className={`w-full h-full object-contain ${
-              platform === 'desktop' ? 'max-h-96' : ''
+              platform === "desktop" ? "max-h-96" : ""
             }`}
             autoPlay
             playsInline
@@ -231,7 +254,7 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
             controlsList="nodownload nofullscreen noremoteplayback"
             disablePictureInPicture
           />
-          
+
           {/* Loading Overlay */}
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -243,7 +266,8 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
           )}
 
           {/* Video Title Overlay */}
-          {(!isCustomFullscreen && !document.fullscreenElement) || showControls ? (
+          {(!isCustomFullscreen && !document.fullscreenElement) ||
+          showControls ? (
             <div className="absolute top-4 left-4 right-4">
               <div className="bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg">
                 <h3 className="font-semibold truncate">{title}</h3>
@@ -255,7 +279,10 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
           <button
             onClick={handleClose}
             className={`absolute top-4 right-4 w-10 h-10 bg-black bg-opacity-75 hover:bg-opacity-100 text-white rounded-full flex items-center justify-center transition-all ${
-              (isCustomFullscreen || document.fullscreenElement) && !showControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+              (isCustomFullscreen || document.fullscreenElement) &&
+              !showControls
+                ? "opacity-0 pointer-events-none"
+                : "opacity-100"
             }`}
           >
             <X className="w-6 h-6" />
@@ -263,11 +290,17 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
         </div>
 
         {/* Controls */}
-        <div className={`flex items-center justify-between bg-gray-800 p-4 transition-opacity duration-300 ${
-          isCustomFullscreen ? `absolute bottom-0 left-0 right-0 z-10 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}` : 'rounded-lg'
-        } ${
-          document.fullscreenElement && platform === 'desktop' ? `${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}` : ''
-        }`}>
+        <div
+          className={`flex items-center justify-between bg-gray-800 p-4 transition-opacity duration-300 ${
+            isCustomFullscreen
+              ? `absolute bottom-0 left-0 right-0 z-10 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`
+              : "rounded-lg"
+          } ${
+            document.fullscreenElement && platform === "desktop"
+              ? `${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`
+              : ""
+          }`}
+        >
           {/* Left Controls */}
           <div className="flex items-center space-x-2">
             <Button
@@ -275,7 +308,11 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
               size="icon"
               className="bg-orange-600 hover:bg-orange-700 text-white"
             >
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              {isPlaying ? (
+                <Pause className="w-5 h-5" />
+              ) : (
+                <Play className="w-5 h-5" />
+              )}
             </Button>
 
             <Button
@@ -284,7 +321,11 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
               size="icon"
               className="text-white hover:bg-gray-700"
             >
-              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              {isMuted ? (
+                <VolumeX className="w-5 h-5" />
+              ) : (
+                <Volume2 className="w-5 h-5" />
+              )}
             </Button>
           </div>
 
@@ -299,7 +340,10 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
                   className="bg-gray-700 border border-gray-600 text-white text-sm rounded px-2 py-1"
                 >
                   {sources.map((s, i) => (
-                    <option key={i} value={i}>Source {i+1}{s.label ? ` - ${s.label}` : ''}</option>
+                    <option key={i} value={i}>
+                      Source {i + 1}
+                      {s.label ? ` - ${s.label}` : ""}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -334,7 +378,7 @@ export default function VideoPlayerModal({ isOpen, onClose, streamUrl, title, pl
           <button
             onClick={() => setIsCustomFullscreen(false)}
             className={`absolute top-4 right-4 z-20 w-12 h-12 bg-black bg-opacity-75 hover:bg-opacity-100 text-white rounded-full flex items-center justify-center transition-all ${
-              showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              showControls ? "opacity-100" : "opacity-0 pointer-events-none"
             }`}
           >
             <X className="w-6 h-6" />

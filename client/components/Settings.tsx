@@ -3,7 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { exportFavorites, importFavorites, clearFavorites, getFavorites, removeFromFavorites, type FavoriteItem } from "@/lib/favorites";
+import {
+  exportFavorites,
+  importFavorites,
+  clearFavorites,
+  getFavorites,
+  removeFromFavorites,
+  type FavoriteItem,
+} from "@/lib/favorites";
 import {
   Download,
   Upload,
@@ -16,58 +23,69 @@ import {
   CheckCircle2,
   Play,
   Users,
-  Radio as RadioIcon
+  Radio as RadioIcon,
 } from "lucide-react";
 
 export default function Settings() {
   const [importData, setImportData] = useState("");
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
   const loadFavorites = () => setFavorites(getFavorites());
-  useEffect(() => { loadFavorites(); }, []);
+  useEffect(() => {
+    loadFavorites();
+  }, []);
 
   const handleExport = () => {
     try {
       const data = exportFavorites();
-      const blob = new Blob([data], { type: 'application/json' });
+      const blob = new Blob([data], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = `lqr-sport-favorites-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `lqr-sport-favorites-${new Date().toISOString().split("T")[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
-      setMessage({ type: 'success', text: 'Favorites exported successfully!' });
+
+      setMessage({ type: "success", text: "Favorites exported successfully!" });
       setTimeout(() => setMessage(null), 3000);
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to export favorites.' });
+      setMessage({ type: "error", text: "Failed to export favorites." });
       setTimeout(() => setMessage(null), 3000);
     }
   };
 
   const handleImport = async () => {
     if (!importData.trim()) {
-      setMessage({ type: 'error', text: 'Please paste your data first.' });
+      setMessage({ type: "error", text: "Please paste your data first." });
       setTimeout(() => setMessage(null), 3000);
       return;
     }
 
     setIsProcessing(true);
-    
+
     try {
       const success = importFavorites(importData);
       if (success) {
-        setMessage({ type: 'success', text: 'Favorites imported successfully!' });
+        setMessage({
+          type: "success",
+          text: "Favorites imported successfully!",
+        });
         setImportData("");
       } else {
-        setMessage({ type: 'error', text: 'Invalid data format. Please check your data.' });
+        setMessage({
+          type: "error",
+          text: "Invalid data format. Please check your data.",
+        });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to import favorites.' });
+      setMessage({ type: "error", text: "Failed to import favorites." });
     } finally {
       setIsProcessing(false);
       setTimeout(() => setMessage(null), 3000);
@@ -75,12 +93,19 @@ export default function Settings() {
   };
 
   const handleClearAll = () => {
-    if (confirm('Are you sure you want to clear all favorites? This action cannot be undone.')) {
+    if (
+      confirm(
+        "Are you sure you want to clear all favorites? This action cannot be undone.",
+      )
+    ) {
       const success = clearFavorites();
       if (success) {
-        setMessage({ type: 'success', text: 'All favorites cleared successfully!' });
+        setMessage({
+          type: "success",
+          text: "All favorites cleared successfully!",
+        });
       } else {
-        setMessage({ type: 'error', text: 'Failed to clear favorites.' });
+        setMessage({ type: "error", text: "Failed to clear favorites." });
       }
       setTimeout(() => setMessage(null), 3000);
     }
@@ -100,19 +125,23 @@ export default function Settings() {
 
       {/* Status Message */}
       {message && (
-        <Alert className={`border ${
-          message.type === 'success' 
-            ? 'border-green-600/50 bg-green-600/10' 
-            : 'border-red-600/50 bg-red-600/10'
-        }`}>
-          {message.type === 'success' ? (
+        <Alert
+          className={`border ${
+            message.type === "success"
+              ? "border-green-600/50 bg-green-600/10"
+              : "border-red-600/50 bg-red-600/10"
+          }`}
+        >
+          {message.type === "success" ? (
             <CheckCircle2 className="h-4 w-4 text-green-400" />
           ) : (
             <AlertCircle className="h-4 w-4 text-red-400" />
           )}
-          <AlertDescription className={
-            message.type === 'success' ? 'text-green-300' : 'text-red-300'
-          }>
+          <AlertDescription
+            className={
+              message.type === "success" ? "text-green-300" : "text-red-300"
+            }
+          >
             {message.text}
           </AlertDescription>
         </Alert>
@@ -155,14 +184,14 @@ export default function Settings() {
               <p className="text-gray-400 text-sm">
                 Paste your exported data below to restore your favorites.
               </p>
-              
+
               <Textarea
                 placeholder="Paste your exported favorites data here..."
                 value={importData}
                 onChange={(e) => setImportData(e.target.value)}
                 className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 min-h-[120px]"
               />
-              
+
               <Button
                 onClick={handleImport}
                 disabled={!importData.trim() || isProcessing}
@@ -191,7 +220,8 @@ export default function Settings() {
                 <span>Clear All Data</span>
               </h3>
               <p className="text-gray-400 text-sm">
-                Remove all favorites and reset your preferences. This action cannot be undone.
+                Remove all favorites and reset your preferences. This action
+                cannot be undone.
               </p>
               <Button
                 onClick={handleClearAll}
@@ -220,20 +250,38 @@ export default function Settings() {
           ) : (
             <div className="space-y-3">
               {favorites.map((f) => (
-                <div key={`${f.type}-${f.id}`} className="flex items-center justify-between bg-gray-700 rounded p-3">
+                <div
+                  key={`${f.type}-${f.id}`}
+                  className="flex items-center justify-between bg-gray-700 rounded p-3"
+                >
                   <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${f.type==='radio' ? 'bg-purple-600' : f.type==='channel' ? 'bg-blue-600' : 'bg-green-600'}`}>
-                      {f.type==='radio' ? <RadioIcon className="w-4 h-4 text-white" /> : f.type==='channel' ? <Users className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white" />}
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${f.type === "radio" ? "bg-purple-600" : f.type === "channel" ? "bg-blue-600" : "bg-green-600"}`}
+                    >
+                      {f.type === "radio" ? (
+                        <RadioIcon className="w-4 h-4 text-white" />
+                      ) : f.type === "channel" ? (
+                        <Users className="w-4 h-4 text-white" />
+                      ) : (
+                        <Play className="w-4 h-4 text-white" />
+                      )}
                     </div>
                     <div>
-                      <p className="text-white font-medium">{f.name || f.title}</p>
-                      <p className="text-xs text-gray-300 uppercase">{f.type}</p>
+                      <p className="text-white font-medium">
+                        {f.name || f.title}
+                      </p>
+                      <p className="text-xs text-gray-300 uppercase">
+                        {f.type}
+                      </p>
                     </div>
                   </div>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => { removeFromFavorites(f.id, f.type); loadFavorites(); }}
+                    onClick={() => {
+                      removeFromFavorites(f.id, f.type);
+                      loadFavorites();
+                    }}
                     className="border-red-600 text-red-400 hover:bg-red-900"
                   >
                     <Trash2 className="w-4 h-4" />

@@ -9,8 +9,19 @@ import VideoPlayerModal from "@/components/VideoPlayerModal";
 import LoadingScreen from "@/components/LoadingScreen";
 import Settings from "@/components/Settings";
 import Matches from "@/components/Matches";
-import { addToFavorites, removeFromFavorites, isFavorite, type FavoriteItem } from "@/lib/favorites";
-import { supabase, type Channel, type LiveTV, type Radio, type Update } from "@/lib/supabase";
+import {
+  addToFavorites,
+  removeFromFavorites,
+  isFavorite,
+  type FavoriteItem,
+} from "@/lib/favorites";
+import {
+  supabase,
+  type Channel,
+  type LiveTV,
+  type Radio,
+  type Update,
+} from "@/lib/supabase";
 import {
   Play,
   Radio as RadioIcon,
@@ -23,7 +34,7 @@ import {
   Maximize,
   Search,
   Loader2,
-  Heart
+  Heart,
 } from "lucide-react";
 
 export default function Index() {
@@ -34,14 +45,14 @@ export default function Index() {
   const [updates, setUpdates] = useState<Update[]>([]);
 
   // UI states
-  const [currentSection, setCurrentSection] = useState('streams');
-  const [channelSearch, setChannelSearch] = useState('');
-  const [liveSearch, setLiveSearch] = useState('');
+  const [currentSection, setCurrentSection] = useState("streams");
+  const [channelSearch, setChannelSearch] = useState("");
+  const [liveSearch, setLiveSearch] = useState("");
   const [loading, setLoading] = useState<Record<string, boolean>>({
     channels: false,
     liveTV: false,
     radio: false,
-    updates: false
+    updates: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -49,133 +60,138 @@ export default function Index() {
   const [contactEmail, setContactEmail] = useState("");
   const [contactMessage, setContactMessage] = useState("");
   const [contactSubmitting, setContactSubmitting] = useState(false);
-  const [contactStatus, setContactStatus] = useState<null | { type: 'success' | 'error'; text: string }>(null);
+  const [contactStatus, setContactStatus] = useState<null | {
+    type: "success" | "error";
+    text: string;
+  }>(null);
 
   // Video Player Modal states
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [currentStreamUrl, setCurrentStreamUrl] = useState('');
-  const [currentStreamTitle, setCurrentStreamTitle] = useState('');
+  const [currentStreamUrl, setCurrentStreamUrl] = useState("");
+  const [currentStreamTitle, setCurrentStreamTitle] = useState("");
 
   // Media player states
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentRadio, setCurrentRadio] = useState<Radio | null>(null);
   const [audio] = useState(new Audio());
   const [isMuted, setIsMuted] = useState(false);
-  const [radioStatus, setRadioStatus] = useState<Record<number, 'online' | 'offline' | 'checking'>>({});
+  const [radioStatus, setRadioStatus] = useState<
+    Record<number, "online" | "offline" | "checking">
+  >({});
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Fetch functions
   const fetchChannels = async () => {
-    setLoading(prev => ({ ...prev, channels: true }));
+    setLoading((prev) => ({ ...prev, channels: true }));
     try {
       const { data, error } = await supabase
-        .from('tv_channels')
-        .select('*')
-        .order('name');
-      
+        .from("tv_channels")
+        .select("*")
+        .order("name");
+
       if (error) throw error;
       setChannels(data || []);
-      setErrors(prev => ({ ...prev, channels: '' }));
+      setErrors((prev) => ({ ...prev, channels: "" }));
     } catch (error) {
-      setErrors(prev => ({ ...prev, channels: 'Failed to load channels' }));
+      setErrors((prev) => ({ ...prev, channels: "Failed to load channels" }));
     } finally {
-      setLoading(prev => ({ ...prev, channels: false }));
+      setLoading((prev) => ({ ...prev, channels: false }));
     }
   };
 
   const fetchLiveTV = async () => {
-    setLoading(prev => ({ ...prev, liveTV: true }));
+    setLoading((prev) => ({ ...prev, liveTV: true }));
     try {
       const { data, error } = await supabase
-        .from('live_tv')
-        .select('*')
-        .order('name');
-      
+        .from("live_tv")
+        .select("*")
+        .order("name");
+
       if (error) throw error;
       setLiveTV(data || []);
-      setErrors(prev => ({ ...prev, liveTV: '' }));
+      setErrors((prev) => ({ ...prev, liveTV: "" }));
     } catch (error) {
-      setErrors(prev => ({ ...prev, liveTV: 'Failed to load live TV' }));
+      setErrors((prev) => ({ ...prev, liveTV: "Failed to load live TV" }));
     } finally {
-      setLoading(prev => ({ ...prev, liveTV: false }));
+      setLoading((prev) => ({ ...prev, liveTV: false }));
     }
   };
 
   const fetchRadio = async () => {
-    setLoading(prev => ({ ...prev, radio: true }));
+    setLoading((prev) => ({ ...prev, radio: true }));
     try {
       const { data, error } = await supabase
-        .from('radio')
-        .select('*')
-        .order('title');
+        .from("radio")
+        .select("*")
+        .order("title");
 
       if (error) throw error;
       setRadio(data || []);
       if (data && data.length > 0) {
         setCurrentRadio(data[0]);
         // Check status of all radio stations
-        data.forEach(station => {
+        data.forEach((station) => {
           checkRadioStatus(station);
         });
       }
-      setErrors(prev => ({ ...prev, radio: '' }));
+      setErrors((prev) => ({ ...prev, radio: "" }));
     } catch (error) {
-      setErrors(prev => ({ ...prev, radio: 'Failed to load radio' }));
+      setErrors((prev) => ({ ...prev, radio: "Failed to load radio" }));
     } finally {
-      setLoading(prev => ({ ...prev, radio: false }));
+      setLoading((prev) => ({ ...prev, radio: false }));
     }
   };
 
   const fetchUpdates = async () => {
-    setLoading(prev => ({ ...prev, updates: true }));
+    setLoading((prev) => ({ ...prev, updates: true }));
     try {
       const { data, error } = await supabase
-        .from('updates')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+        .from("updates")
+        .select("*")
+        .order("created_at", { ascending: false });
+
       if (error) throw error;
       setUpdates(data || []);
-      setErrors(prev => ({ ...prev, updates: '' }));
+      setErrors((prev) => ({ ...prev, updates: "" }));
     } catch (error) {
-      setErrors(prev => ({ ...prev, updates: 'Failed to load updates' }));
+      setErrors((prev) => ({ ...prev, updates: "Failed to load updates" }));
     } finally {
-      setLoading(prev => ({ ...prev, updates: false }));
+      setLoading((prev) => ({ ...prev, updates: false }));
     }
   };
 
   // Check radio station status
   const checkRadioStatus = async (station: Radio) => {
-    setRadioStatus(prev => ({ ...prev, [station.id]: 'checking' }));
+    setRadioStatus((prev) => ({ ...prev, [station.id]: "checking" }));
 
     try {
       // Create a test audio element to check if the stream works
       const testAudio = new Audio();
-      testAudio.preload = 'none';
+      testAudio.preload = "none";
       testAudio.src = station.live_url;
 
       return new Promise<void>((resolve) => {
         const timeout = setTimeout(() => {
-          setRadioStatus(prev => ({ ...prev, [station.id]: 'offline' }));
+          setRadioStatus((prev) => ({ ...prev, [station.id]: "offline" }));
           resolve();
         }, 5000); // 5 second timeout
 
-        testAudio.addEventListener('canplaythrough', () => {
+        testAudio.addEventListener("canplaythrough", () => {
           clearTimeout(timeout);
-          setRadioStatus(prev => ({ ...prev, [station.id]: 'online' }));
+          setRadioStatus((prev) => ({ ...prev, [station.id]: "online" }));
           resolve();
         });
 
-        testAudio.addEventListener('error', () => {
+        testAudio.addEventListener("error", () => {
           clearTimeout(timeout);
-          setRadioStatus(prev => ({ ...prev, [station.id]: 'offline' }));
+          setRadioStatus((prev) => ({ ...prev, [station.id]: "offline" }));
           resolve();
         });
 
         testAudio.load();
       });
     } catch (error) {
-      setRadioStatus(prev => ({ ...prev, [station.id]: 'offline' }));
+      setRadioStatus((prev) => ({ ...prev, [station.id]: "offline" }));
     }
   };
 
@@ -206,70 +222,84 @@ export default function Index() {
   };
 
   // Video player functions
-  const [altSources, setAltSources] = useState<{ url: string; label?: string }[]>([]);
+  const [altSources, setAltSources] = useState<
+    { url: string; label?: string }[]
+  >([]);
 
-  const openVideoPlayer = useCallback((url: string, title: string, alts: { url: string; label?: string }[] = []) => {
-    setCurrentStreamUrl(url);
-    setCurrentStreamTitle(title);
-    setAltSources(alts);
-    setIsVideoModalOpen(true);
-  }, []);
+  const openVideoPlayer = useCallback(
+    (
+      url: string,
+      title: string,
+      alts: { url: string; label?: string }[] = [],
+    ) => {
+      setCurrentStreamUrl(url);
+      setCurrentStreamTitle(title);
+      setAltSources(alts);
+      setIsVideoModalOpen(true);
+    },
+    [],
+  );
 
   const closeVideoPlayer = useCallback(() => {
     setIsVideoModalOpen(false);
-    setCurrentStreamUrl('');
-    setCurrentStreamTitle('');
+    setCurrentStreamUrl("");
+    setCurrentStreamTitle("");
   }, []);
 
   // Favorites render tick
   const [favoritesVersion, setFavoritesVersion] = useState(0);
 
   // Favorites functions
-  const toggleFavorite = useCallback((item: any, type: 'channel' | 'stream' | 'radio') => {
-    const favoriteItem: FavoriteItem = {
-      id: item.id,
-      name: item.name || item.title,
-      type,
-      stream_url: item.stream_url,
-      live_url: item.live_url,
-      logo_url: item.logo_url,
-      title: item.title
-    };
+  const toggleFavorite = useCallback(
+    (item: any, type: "channel" | "stream" | "radio") => {
+      const favoriteItem: FavoriteItem = {
+        id: item.id,
+        name: item.name || item.title,
+        type,
+        stream_url: item.stream_url,
+        live_url: item.live_url,
+        logo_url: item.logo_url,
+        title: item.title,
+      };
 
-    const isCurrentlyFavorite = isFavorite(item.id, type);
+      const isCurrentlyFavorite = isFavorite(item.id, type);
 
-    if (isCurrentlyFavorite) {
-      removeFromFavorites(item.id, type);
-    } else {
-      addToFavorites(favoriteItem);
-    }
+      if (isCurrentlyFavorite) {
+        removeFromFavorites(item.id, type);
+      } else {
+        addToFavorites(favoriteItem);
+      }
 
-    // Force immediate UI update
-    setFavoritesVersion(v => v + 1);
-  }, []);
+      // Force immediate UI update
+      setFavoritesVersion((v) => v + 1);
+    },
+    [],
+  );
 
   const checkFavoriteStatus = useCallback((id: number, type: string) => {
     return isFavorite(id, type);
   }, []);
 
   // Filter functions
-  const filteredChannels = channels.filter(channel =>
-    channel.name.toLowerCase().includes(channelSearch.toLowerCase())
+  const filteredChannels = channels.filter((channel) =>
+    channel.name.toLowerCase().includes(channelSearch.toLowerCase()),
   );
 
-  const filteredLiveTV = liveTV.filter(tv =>
-    tv.name.toLowerCase().includes(liveSearch.toLowerCase())
+  const filteredLiveTV = liveTV.filter((tv) =>
+    tv.name.toLowerCase().includes(liveSearch.toLowerCase()),
   );
 
   // Format date function
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60),
+    );
+
+    if (diffInHours < 1) return "Just now";
     if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInHours < 48) return '1 day ago';
+    if (diffInHours < 48) return "1 day ago";
     return `${Math.floor(diffInHours / 24)} days ago`;
   };
 
@@ -282,7 +312,7 @@ export default function Index() {
         fetchLiveTV(),
         fetchRadio(),
         fetchUpdates(),
-        new Promise(resolve => setTimeout(resolve, 3500)) // 3.5 second minimum loading
+        new Promise((resolve) => setTimeout(resolve, 3500)), // 3.5 second minimum loading
       ]);
       setIsInitialLoading(false);
     };
@@ -294,13 +324,13 @@ export default function Index() {
   useEffect(() => {
     const handleAudioEnd = () => setIsPlaying(false);
     const handleAudioError = () => setIsPlaying(false);
-    
-    audio.addEventListener('ended', handleAudioEnd);
-    audio.addEventListener('error', handleAudioError);
-    
+
+    audio.addEventListener("ended", handleAudioEnd);
+    audio.addEventListener("error", handleAudioError);
+
     return () => {
-      audio.removeEventListener('ended', handleAudioEnd);
-      audio.removeEventListener('error', handleAudioError);
+      audio.removeEventListener("ended", handleAudioEnd);
+      audio.removeEventListener("error", handleAudioError);
     };
   }, [audio]);
 
@@ -312,27 +342,31 @@ export default function Index() {
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Add HLS.js script */}
       <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-      
-      <Header 
-        onSectionChange={setCurrentSection} 
+
+      <Header
+        onSectionChange={setCurrentSection}
         currentSection={currentSection}
       />
 
       <main className="container mx-auto px-4 py-6">
         {/* Haitian Streams Section */}
-        {currentSection === 'streams' && (
+        {currentSection === "streams" && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl md:text-2xl font-bold">Haitian Streams</h2>
-                <Badge className="bg-gray-700 text-white">{liveTV.length} Streams</Badge>
+                <h2 className="text-xl md:text-2xl font-bold">
+                  Haitian Streams
+                </h2>
+                <Badge className="bg-gray-700 text-white">
+                  {liveTV.length} Streams
+                </Badge>
               </div>
               <Badge variant="secondary" className="bg-red-600 text-white">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></div>
                 LIVE
               </Badge>
             </div>
-            
+
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
@@ -355,42 +389,53 @@ export default function Index() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredLiveTV.map((stream) => (
-                  <Card key={stream.id} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors">
+                  <Card
+                    key={stream.id}
+                    className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors"
+                  >
                     <CardContent className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
                         {stream.logo_url && (
-                          <img 
-                            src={stream.logo_url} 
+                          <img
+                            src={stream.logo_url}
                             alt={stream.name}
                             className="w-10 h-10 object-contain rounded"
                           />
                         )}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-white truncate">{stream.name}</h3>
+                          <h3 className="font-semibold text-white truncate">
+                            {stream.name}
+                          </h3>
                           <p className="text-xs text-gray-400">Live Stream</p>
                         </div>
                       </div>
                       <div className="flex space-x-2">
                         <Button
-                          onClick={() => openVideoPlayer(stream.stream_url, stream.name)}
+                          onClick={() =>
+                            openVideoPlayer(stream.stream_url, stream.name)
+                          }
                           className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
                         >
                           <Play className="w-4 h-4 mr-2" />
                           Watch Now
                         </Button>
                         <Button
-                          onClick={() => toggleFavorite(stream, 'stream')}
+                          onClick={() => toggleFavorite(stream, "stream")}
                           variant="outline"
                           size="icon"
                           className={`border-gray-600 hover:bg-gray-700 ${
-                            checkFavoriteStatus(stream.id, 'stream')
-                              ? 'text-red-500 bg-red-500/20 border-red-500'
-                              : 'text-gray-400'
+                            checkFavoriteStatus(stream.id, "stream")
+                              ? "text-red-500 bg-red-500/20 border-red-500"
+                              : "text-gray-400"
                           }`}
                         >
-                          <Heart className={`w-4 h-4 ${
-                            checkFavoriteStatus(stream.id, 'stream') ? 'fill-current' : ''
-                          }`} />
+                          <Heart
+                            className={`w-4 h-4 ${
+                              checkFavoriteStatus(stream.id, "stream")
+                                ? "fill-current"
+                                : ""
+                            }`}
+                          />
                         </Button>
                       </div>
                     </CardContent>
@@ -402,13 +447,15 @@ export default function Index() {
         )}
 
         {/* Channels Section */}
-        {currentSection === 'channels' && (
+        {currentSection === "channels" && (
           <div>
             <div className="flex items-center gap-2 mb-4">
               <h2 className="text-xl md:text-2xl font-bold">TV Channels</h2>
-              <Badge className="bg-gray-700 text-white">{channels.length} Channels</Badge>
+              <Badge className="bg-gray-700 text-white">
+                {channels.length} Channels
+              </Badge>
             </div>
-            
+
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
@@ -431,39 +478,50 @@ export default function Index() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredChannels.map((channel) => (
-                  <Card key={channel.id} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors">
+                  <Card
+                    key={channel.id}
+                    className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors"
+                  >
                     <CardContent className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
                         {channel.logo_url && (
-                          <img 
-                            src={channel.logo_url} 
+                          <img
+                            src={channel.logo_url}
                             alt={channel.name}
                             className="w-10 h-10 object-contain rounded"
                           />
                         )}
-                        <h3 className="font-semibold text-white">{channel.name}</h3>
+                        <h3 className="font-semibold text-white">
+                          {channel.name}
+                        </h3>
                       </div>
                       <div className="flex space-x-2">
                         <Button
-                          onClick={() => openVideoPlayer(channel.stream_url, channel.name)}
+                          onClick={() =>
+                            openVideoPlayer(channel.stream_url, channel.name)
+                          }
                           className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
                         >
                           <Play className="w-4 h-4 mr-2" />
                           Watch
                         </Button>
                         <Button
-                          onClick={() => toggleFavorite(channel, 'channel')}
+                          onClick={() => toggleFavorite(channel, "channel")}
                           variant="outline"
                           size="icon"
                           className={`border-gray-600 hover:bg-gray-700 ${
-                            checkFavoriteStatus(channel.id, 'channel')
-                              ? 'text-red-500 bg-red-500/20 border-red-500'
-                              : 'text-gray-400'
+                            checkFavoriteStatus(channel.id, "channel")
+                              ? "text-red-500 bg-red-500/20 border-red-500"
+                              : "text-gray-400"
                           }`}
                         >
-                          <Heart className={`w-4 h-4 ${
-                            checkFavoriteStatus(channel.id, 'channel') ? 'fill-current' : ''
-                          }`} />
+                          <Heart
+                            className={`w-4 h-4 ${
+                              checkFavoriteStatus(channel.id, "channel")
+                                ? "fill-current"
+                                : ""
+                            }`}
+                          />
                         </Button>
                       </div>
                     </CardContent>
@@ -475,7 +533,7 @@ export default function Index() {
         )}
 
         {/* Radio Section */}
-        {currentSection === 'radio' && (
+        {currentSection === "radio" && (
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl md:text-2xl font-bold">Radio Stations</h2>
@@ -509,13 +567,17 @@ export default function Index() {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="text-lg font-bold text-white">Now Playing</h3>
+                            <h3 className="text-lg font-bold text-white">
+                              Now Playing
+                            </h3>
                             <Badge className="bg-red-600 text-white text-xs">
                               <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse mr-1"></div>
                               LIVE
                             </Badge>
                           </div>
-                          <p className="text-orange-200 font-semibold">{currentRadio.title}</p>
+                          <p className="text-orange-200 font-semibold">
+                            {currentRadio.title}
+                          </p>
 
                           {/* Waveform Animation */}
                           <div className="flex items-end space-x-1 mt-3 h-6">
@@ -526,7 +588,7 @@ export default function Index() {
                                 style={{
                                   height: `${Math.random() * 20 + 8}px`,
                                   animationDelay: `${i * 100}ms`,
-                                  animationDuration: '1.2s'
+                                  animationDuration: "1.2s",
                                 }}
                               />
                             ))}
@@ -547,7 +609,11 @@ export default function Index() {
                             size="icon"
                             className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
                           >
-                            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                            {isMuted ? (
+                              <VolumeX className="w-4 h-4" />
+                            ) : (
+                              <Volume2 className="w-4 h-4" />
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -562,8 +628,8 @@ export default function Index() {
                       key={station.id}
                       className={`transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer ${
                         currentRadio?.id === station.id && isPlaying
-                          ? 'bg-gradient-to-br from-orange-600/30 to-red-600/30 border-orange-600/50'
-                          : 'bg-gray-800 border-gray-700 hover:bg-gray-750'
+                          ? "bg-gradient-to-br from-orange-600/30 to-red-600/30 border-orange-600/50"
+                          : "bg-gray-800 border-gray-700 hover:bg-gray-750"
                       }`}
                       onClick={() => setCurrentRadio(station)}
                     >
@@ -572,13 +638,16 @@ export default function Index() {
                           <div className="w-12 h-12 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
                             <RadioIcon className="w-6 h-6 text-white" />
                           </div>
-                          {radioStatus[station.id] === 'checking' ? (
+                          {radioStatus[station.id] === "checking" ? (
                             <Badge className="bg-yellow-600 text-white text-xs">
                               <Loader2 className="w-3 h-3 animate-spin mr-1" />
                               CHECKING
                             </Badge>
-                          ) : radioStatus[station.id] === 'offline' ? (
-                            <Badge variant="secondary" className="bg-red-600 text-white text-xs">
+                          ) : radioStatus[station.id] === "offline" ? (
+                            <Badge
+                              variant="secondary"
+                              className="bg-red-600 text-white text-xs"
+                            >
                               OFFLINE
                             </Badge>
                           ) : (
@@ -589,8 +658,12 @@ export default function Index() {
                           )}
                         </div>
 
-                        <h3 className="font-bold text-white mb-2 truncate">{station.title}</h3>
-                        <p className="text-sm text-gray-400 mb-4">Radio Station</p>
+                        <h3 className="font-bold text-white mb-2 truncate">
+                          {station.title}
+                        </h3>
+                        <p className="text-sm text-gray-400 mb-4">
+                          Radio Station
+                        </p>
 
                         <div className="flex space-x-2">
                           <Button
@@ -604,8 +677,8 @@ export default function Index() {
                             }}
                             className={`flex-1 transition-colors ${
                               currentRadio?.id === station.id && isPlaying
-                                ? 'bg-red-600 hover:bg-red-700 text-white'
-                                : 'bg-orange-600 hover:bg-orange-700 text-white'
+                                ? "bg-red-600 hover:bg-red-700 text-white"
+                                : "bg-orange-600 hover:bg-orange-700 text-white"
                             }`}
                           >
                             {currentRadio?.id === station.id && isPlaying ? (
@@ -623,36 +696,41 @@ export default function Index() {
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleFavorite(station, 'radio');
+                              toggleFavorite(station, "radio");
                             }}
                             variant="outline"
                             size="icon"
                             className={`border-gray-600 hover:bg-gray-700 ${
-                              checkFavoriteStatus(station.id, 'radio')
-                                ? 'text-red-500 bg-red-500/20 border-red-500'
-                                : 'text-gray-400'
+                              checkFavoriteStatus(station.id, "radio")
+                                ? "text-red-500 bg-red-500/20 border-red-500"
+                                : "text-gray-400"
                             }`}
                           >
-                            <Heart className={`w-4 h-4 ${
-                              checkFavoriteStatus(station.id, 'radio') ? 'fill-current' : ''
-                            }`} />
+                            <Heart
+                              className={`w-4 h-4 ${
+                                checkFavoriteStatus(station.id, "radio")
+                                  ? "fill-current"
+                                  : ""
+                              }`}
+                            />
                           </Button>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
-
               </div>
             )}
           </div>
         )}
 
         {/* Updates Section */}
-        {currentSection === 'updates' && (
+        {currentSection === "updates" && (
           <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-4">Latest Updates</h2>
-            
+            <h2 className="text-xl md:text-2xl font-bold mb-4">
+              Latest Updates
+            </h2>
+
             {loading.updates ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
@@ -688,15 +766,18 @@ export default function Index() {
         )}
 
         {/* Copyright Section */}
-        {currentSection === 'copyright' && (
+        {currentSection === "copyright" && (
           <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-4">Copyright Disclaimer</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-4">
+              Copyright Disclaimer
+            </h2>
             <Card className="bg-gray-800 border-gray-700">
               <CardContent className="p-6">
                 <p className="text-gray-300 leading-relaxed">
-                  All channels featured on LQR SPORT are publicly available from the internet.
-                  We do not host, own, or claim any rights over the content displayed.
-                  All content belongs to their respective owners and broadcasters.
+                  All channels featured on LQR SPORT are publicly available from
+                  the internet. We do not host, own, or claim any rights over
+                  the content displayed. All content belongs to their respective
+                  owners and broadcasters.
                 </p>
               </CardContent>
             </Card>
@@ -704,7 +785,7 @@ export default function Index() {
         )}
 
         {/* Matches Section */}
-        {currentSection === 'matches' && (
+        {currentSection === "matches" && (
           <div>
             <h2 className="text-xl md:text-2xl font-bold mb-4">Matches</h2>
             <Matches onWatch={openVideoPlayer} />
@@ -712,16 +793,18 @@ export default function Index() {
         )}
 
         {/* Settings Section */}
-        {currentSection === 'settings' && (
+        {currentSection === "settings" && (
           <div>
             <Settings />
           </div>
         )}
 
         {/* Contact Section */}
-        {currentSection === 'contact' && (
+        {currentSection === "contact" && (
           <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-6 text-center">Contact Us</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-6 text-center">
+              Contact Us
+            </h2>
             <div className="max-w-2xl mx-auto">
               <Card className="bg-gray-800 border-gray-700">
                 <CardContent className="p-8">
@@ -735,12 +818,16 @@ export default function Index() {
                     </div>
 
                     <div className="space-y-2 text-center">
-                      <h3 className="text-2xl font-bold text-white">LQR SPORT</h3>
+                      <h3 className="text-2xl font-bold text-white">
+                        LQR SPORT
+                      </h3>
                       <p className="text-gray-300">Haitian Media Hub</p>
                     </div>
 
                     {contactStatus && (
-                      <div className={`rounded p-3 text-sm ${contactStatus.type === 'success' ? 'bg-green-600/20 text-green-300' : 'bg-red-600/20 text-red-300'}`}>
+                      <div
+                        className={`rounded p-3 text-sm ${contactStatus.type === "success" ? "bg-green-600/20 text-green-300" : "bg-red-600/20 text-red-300"}`}
+                      >
                         {contactStatus.text}
                       </div>
                     )}
@@ -749,18 +836,31 @@ export default function Index() {
                       onSubmit={async (e) => {
                         e.preventDefault();
                         if (!contactEmail || !contactMessage) {
-                          setContactStatus({ type: 'error', text: 'Please enter your email and message.' });
+                          setContactStatus({
+                            type: "error",
+                            text: "Please enter your email and message.",
+                          });
                           setTimeout(() => setContactStatus(null), 3000);
                           return;
                         }
                         setContactSubmitting(true);
-                        const { error } = await supabase.from('messages').insert([{ email: contactEmail, content: contactMessage }]);
+                        const { error } = await supabase
+                          .from("messages")
+                          .insert([
+                            { email: contactEmail, content: contactMessage },
+                          ]);
                         if (error) {
-                          setContactStatus({ type: 'error', text: 'Failed to send message. Try again later.' });
+                          setContactStatus({
+                            type: "error",
+                            text: "Failed to send message. Try again later.",
+                          });
                         } else {
-                          setContactStatus({ type: 'success', text: 'Message sent! We will get back to you soon.' });
-                          setContactEmail('');
-                          setContactMessage('');
+                          setContactStatus({
+                            type: "success",
+                            text: "Message sent! We will get back to you soon.",
+                          });
+                          setContactEmail("");
+                          setContactMessage("");
                         }
                         setContactSubmitting(false);
                         setTimeout(() => setContactStatus(null), 3000);
@@ -768,7 +868,9 @@ export default function Index() {
                       className="space-y-4"
                     >
                       <div>
-                        <label className="block text-sm text-gray-300 mb-1">Your Email</label>
+                        <label className="block text-sm text-gray-300 mb-1">
+                          Your Email
+                        </label>
                         <Input
                           type="email"
                           value={contactEmail}
@@ -779,7 +881,9 @@ export default function Index() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-300 mb-1">Message</label>
+                        <label className="block text-sm text-gray-300 mb-1">
+                          Message
+                        </label>
                         <Textarea
                           value={contactMessage}
                           onChange={(e) => setContactMessage(e.target.value)}
@@ -788,14 +892,18 @@ export default function Index() {
                           required
                         />
                       </div>
-                      <Button type="submit" disabled={contactSubmitting} className="bg-orange-600 hover:bg-orange-700 text-white">
+                      <Button
+                        type="submit"
+                        disabled={contactSubmitting}
+                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                      >
                         {contactSubmitting ? (
                           <div className="flex items-center space-x-2">
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             <span>Sending...</span>
                           </div>
                         ) : (
-                          'Send Message'
+                          "Send Message"
                         )}
                       </Button>
                     </form>

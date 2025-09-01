@@ -8,7 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import AdminLogin from "@/components/AdminLogin";
 import LoadingScreen from "@/components/LoadingScreen";
 import { useToast } from "@/hooks/use-toast";
-import { supabase, type Channel, type LiveTV, type Radio, type Update, type Team, type League, type Match, type MatchSource, type Message } from "@/lib/supabase";
+import {
+  supabase,
+  type Channel,
+  type LiveTV,
+  type Radio,
+  type Update,
+  type Team,
+  type League,
+  type Match,
+  type MatchSource,
+  type Message,
+} from "@/lib/supabase";
 import {
   Shield,
   BarChart3,
@@ -31,16 +42,27 @@ import {
   Trophy,
   Calendar,
   Mail,
-  Search
+  Search,
 } from "lucide-react";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Command, CommandInput, CommandList, CommandGroup, CommandItem, CommandEmpty } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandGroup,
+  CommandItem,
+  CommandEmpty,
+} from "@/components/ui/command";
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   // Data states
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -52,9 +74,16 @@ export default function Admin() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [matchSources, setMatchSources] = useState<MatchSource[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedMatchSource, setSelectedMatchSource] = useState<Record<number, { type: 'channel' | 'stream'; id: number; name: string } | null>>({});
+  const [selectedMatchSource, setSelectedMatchSource] = useState<
+    Record<
+      number,
+      { type: "channel" | "stream"; id: number; name: string } | null
+    >
+  >({});
   const [pickerOpen, setPickerOpen] = useState<Record<number, boolean>>({});
-  const [addingSourceBusy, setAddingSourceBusy] = useState<Record<number, boolean>>({});
+  const [addingSourceBusy, setAddingSourceBusy] = useState<
+    Record<number, boolean>
+  >({});
 
   // Form states
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -68,22 +97,41 @@ export default function Admin() {
     totalRadio: 0,
     totalUpdates: 0,
     onlineRadio: 0,
-    recentActivity: []
+    recentActivity: [],
   });
 
   // Fetch all data
   const fetchAllData = async () => {
     try {
-      const [channelsRes, liveRes, radioRes, updatesRes, teamsRes, leaguesRes, matchesRes, matchSrcRes, messagesRes] = await Promise.all([
-        supabase.from('tv_channels').select('*').order('name'),
-        supabase.from('live_tv').select('*').order('name'),
-        supabase.from('radio').select('*').order('title'),
-        supabase.from('updates').select('*').order('created_at', { ascending: false }),
-        supabase.from('teams').select('*').order('name'),
-        supabase.from('leagues').select('*').order('name'),
-        supabase.from('matches').select('*').order('match_time', { ascending: true }),
-        supabase.from('match_sources').select('*'),
-        supabase.from('messages').select('*').order('created_at', { ascending: false })
+      const [
+        channelsRes,
+        liveRes,
+        radioRes,
+        updatesRes,
+        teamsRes,
+        leaguesRes,
+        matchesRes,
+        matchSrcRes,
+        messagesRes,
+      ] = await Promise.all([
+        supabase.from("tv_channels").select("*").order("name"),
+        supabase.from("live_tv").select("*").order("name"),
+        supabase.from("radio").select("*").order("title"),
+        supabase
+          .from("updates")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase.from("teams").select("*").order("name"),
+        supabase.from("leagues").select("*").order("name"),
+        supabase
+          .from("matches")
+          .select("*")
+          .order("match_time", { ascending: true }),
+        supabase.from("match_sources").select("*"),
+        supabase
+          .from("messages")
+          .select("*")
+          .order("created_at", { ascending: false }),
       ]);
 
       if (channelsRes.data) setChannels(channelsRes.data);
@@ -103,52 +151,68 @@ export default function Admin() {
         totalRadio: radioRes.data?.length || 0,
         totalUpdates: updatesRes.data?.length || 0,
         onlineRadio: radioRes.data?.length || 0, // Simplified for now
-        recentActivity: updatesRes.data?.slice(0, 5) || []
+        recentActivity: updatesRes.data?.slice(0, 5) || [],
       });
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     }
   };
 
   // Helpers for CSV
   const toCSV = (rows: any[], columns: string[]) => {
     const escape = (v: any) => {
-      const s = v == null ? '' : String(v);
+      const s = v == null ? "" : String(v);
       return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
     };
-    return [columns.join(','), ...rows.map(r => columns.map(c => escape(r[c])).join(','))].join('\n');
+    return [
+      columns.join(","),
+      ...rows.map((r) => columns.map((c) => escape(r[c])).join(",")),
+    ].join("\n");
   };
 
   const download = (filename: string, text: string) => {
-    const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([text], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
     URL.revokeObjectURL(url);
   };
 
   const parseCSV = async (file: File): Promise<string[][]> => {
     const text = await file.text();
-    return text.split(/\r?\n/).filter(Boolean).map(line => {
-      const result: string[] = [];
-      let cur = '', inQuotes = false;
-      for (let i=0;i<line.length;i++) {
-        const ch = line[i];
-        if (ch === '"') {
-          if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
-          else inQuotes = !inQuotes;
-        } else if (ch === ',' && !inQuotes) { result.push(cur); cur=''; }
-        else cur += ch;
-      }
-      result.push(cur);
-      return result.map(s => s.trim());
-    });
+    return text
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .map((line) => {
+        const result: string[] = [];
+        let cur = "",
+          inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+              cur += '"';
+              i++;
+            } else inQuotes = !inQuotes;
+          } else if (ch === "," && !inQuotes) {
+            result.push(cur);
+            cur = "";
+          } else cur += ch;
+        }
+        result.push(cur);
+        return result.map((s) => s.trim());
+      });
   };
 
   // Safe insert/update with optional columns (publish_at/unpublish_at)
   const safeInsert = async (table: string, data: any) => {
     const { error } = await supabase.from(table).insert([data]);
-    if (error && /column\s+\"?(publish_at|unpublish_at)\"?/i.test(error.message)) {
+    if (
+      error &&
+      /column\s+\"?(publish_at|unpublish_at)\"?/i.test(error.message)
+    ) {
       const { publish_at, unpublish_at, ...rest } = data;
       return supabase.from(table).insert([rest]);
     }
@@ -156,10 +220,13 @@ export default function Admin() {
   };
 
   const safeUpdate = async (table: string, id: number, data: any) => {
-    const { error } = await supabase.from(table).update(data).eq('id', id);
-    if (error && /column\s+\"?(publish_at|unpublish_at)\"?/i.test(error.message)) {
+    const { error } = await supabase.from(table).update(data).eq("id", id);
+    if (
+      error &&
+      /column\s+\"?(publish_at|unpublish_at)\"?/i.test(error.message)
+    ) {
       const { publish_at, unpublish_at, ...rest } = data;
-      return supabase.from(table).update(rest).eq('id', id);
+      return supabase.from(table).update(rest).eq("id", id);
     }
     return { error };
   };
@@ -174,7 +241,7 @@ export default function Admin() {
       setEditingItem(null);
       setFormData({});
     } catch (error) {
-      console.error('Error creating item:', error);
+      console.error("Error creating item:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -189,26 +256,23 @@ export default function Admin() {
       setEditingItem(null);
       setFormData({});
     } catch (error) {
-      console.error('Error updating item:', error);
+      console.error("Error updating item:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (table: string, id: number) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
-    
+    if (!confirm("Are you sure you want to delete this item?")) return;
+
     try {
-      const { error } = await supabase
-        .from(table)
-        .delete()
-        .eq('id', id);
-      
+      const { error } = await supabase.from(table).delete().eq("id", id);
+
       if (error) throw error;
-      
+
       await fetchAllData();
     } catch (error) {
-      console.error('Error deleting item:', error);
+      console.error("Error deleting item:", error);
     }
   };
 
@@ -216,10 +280,10 @@ export default function Admin() {
   useEffect(() => {
     const initAdmin = async () => {
       // Show loading for 2 seconds minimum
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       setIsLoading(false);
     };
-    
+
     initAdmin();
   }, []);
 
@@ -247,178 +311,268 @@ export default function Admin() {
         <CardHeader>
           <CardTitle className="text-white flex items-center space-x-2">
             <Plus className="w-5 h-5" />
-            <span>{isEdit ? 'Edit' : 'Add'} {type}</span>
+            <span>
+              {isEdit ? "Edit" : "Add"} {type}
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {type === 'Channel' && (
+          {type === "Channel" && (
             <>
               <Input
                 placeholder="Channel Name"
-                value={currentData.name || ''}
-                onChange={(e) => setFormData({...currentData, name: e.target.value})}
+                value={currentData.name || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, name: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
               <Input
                 placeholder="Stream URL"
-                value={currentData.stream_url || ''}
-                onChange={(e) => setFormData({...currentData, stream_url: e.target.value})}
+                value={currentData.stream_url || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, stream_url: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
               <Input
                 placeholder="Logo URL (optional)"
-                value={currentData.logo_url || ''}
-                onChange={(e) => setFormData({...currentData, logo_url: e.target.value})}
+                value={currentData.logo_url || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, logo_url: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
             </>
           )}
 
-          {type === 'Stream' && (
+          {type === "Stream" && (
             <>
               <Input
                 placeholder="Stream Name"
-                value={currentData.name || ''}
-                onChange={(e) => setFormData({...currentData, name: e.target.value})}
+                value={currentData.name || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, name: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
               <Input
                 placeholder="Stream URL"
-                value={currentData.stream_url || ''}
-                onChange={(e) => setFormData({...currentData, stream_url: e.target.value})}
+                value={currentData.stream_url || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, stream_url: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
               <Input
                 placeholder="Logo URL (optional)"
-                value={currentData.logo_url || ''}
-                onChange={(e) => setFormData({...currentData, logo_url: e.target.value})}
+                value={currentData.logo_url || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, logo_url: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
             </>
           )}
 
-          {type === 'Radio' && (
+          {type === "Radio" && (
             <>
               <Input
                 placeholder="Radio Station Title"
-                value={currentData.title || ''}
-                onChange={(e) => setFormData({...currentData, title: e.target.value})}
+                value={currentData.title || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, title: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
               <Input
                 placeholder="Live Stream URL"
-                value={currentData.live_url || ''}
-                onChange={(e) => setFormData({...currentData, live_url: e.target.value})}
+                value={currentData.live_url || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, live_url: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
             </>
           )}
 
-          {type === 'Update' && (
+          {type === "Update" && (
             <>
               <Input
                 placeholder="Update Title"
-                value={currentData.title || ''}
-                onChange={(e) => setFormData({...currentData, title: e.target.value})}
+                value={currentData.title || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, title: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
               <Textarea
                 placeholder="Update Message"
-                value={currentData.message || ''}
-                onChange={(e) => setFormData({...currentData, message: e.target.value})}
+                value={currentData.message || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, message: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white min-h-[100px]"
               />
             </>
           )}
 
-          {type === 'Team' && (
+          {type === "Team" && (
             <>
               <Input
                 placeholder="Team Name"
-                value={currentData.name || ''}
-                onChange={(e) => setFormData({...currentData, name: e.target.value})}
+                value={currentData.name || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, name: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
               <Input
                 placeholder="Logo URL (optional)"
-                value={currentData.logo_url || ''}
-                onChange={(e) => setFormData({...currentData, logo_url: e.target.value})}
+                value={currentData.logo_url || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, logo_url: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
             </>
           )}
 
-          {type === 'League' && (
+          {type === "League" && (
             <>
               <Input
                 placeholder="League Name"
-                value={currentData.name || ''}
-                onChange={(e) => setFormData({...currentData, name: e.target.value})}
+                value={currentData.name || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, name: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
               <Input
                 placeholder="Logo URL (optional)"
-                value={currentData.logo_url || ''}
-                onChange={(e) => setFormData({...currentData, logo_url: e.target.value})}
+                value={currentData.logo_url || ""}
+                onChange={(e) =>
+                  setFormData({ ...currentData, logo_url: e.target.value })
+                }
                 className="bg-gray-700 border-gray-600 text-white"
               />
             </>
           )}
 
-          {type === 'Match' && (
+          {type === "Match" && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <select
-                  value={currentData.home_team_id || ''}
-                  onChange={(e) => setFormData({ ...currentData, home_team_id: Number(e.target.value) })}
+                  value={currentData.home_team_id || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...currentData,
+                      home_team_id: Number(e.target.value),
+                    })
+                  }
                   className="bg-gray-700 border-gray-600 text-white rounded p-2"
                 >
-                  <option value="" disabled>Home Team</option>
-                  {teams.map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
+                  <option value="" disabled>
+                    Home Team
+                  </option>
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
                   ))}
                 </select>
                 <select
-                  value={currentData.away_team_id || ''}
-                  onChange={(e) => setFormData({ ...currentData, away_team_id: Number(e.target.value) })}
+                  value={currentData.away_team_id || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...currentData,
+                      away_team_id: Number(e.target.value),
+                    })
+                  }
                   className="bg-gray-700 border-gray-600 text-white rounded p-2"
                 >
-                  <option value="" disabled>Away Team</option>
-                  {teams.map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
+                  <option value="" disabled>
+                    Away Team
+                  </option>
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <select
-                  value={currentData.league_id || ''}
-                  onChange={(e) => setFormData({ ...currentData, league_id: Number(e.target.value) })}
+                  value={currentData.league_id || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...currentData,
+                      league_id: Number(e.target.value),
+                    })
+                  }
                   className="bg-gray-700 border-gray-600 text-white rounded p-2"
                 >
-                  <option value="" disabled>League</option>
-                  {leagues.map(l => (
-                    <option key={l.id} value={l.id}>{l.name}</option>
+                  <option value="" disabled>
+                    League
+                  </option>
+                  {leagues.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
                   ))}
                 </select>
                 <input
                   type="datetime-local"
-                  value={currentData.match_time ? new Date(currentData.match_time).toISOString().slice(0,16) : ''}
-                  onChange={(e) => setFormData({ ...currentData, match_time: new Date(e.target.value).toISOString() })}
+                  value={
+                    currentData.match_time
+                      ? new Date(currentData.match_time)
+                          .toISOString()
+                          .slice(0, 16)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setFormData({
+                      ...currentData,
+                      match_time: new Date(e.target.value).toISOString(),
+                    })
+                  }
                   className="bg-gray-700 border-gray-600 text-white rounded p-2"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="datetime-local"
-                  value={currentData.publish_at ? new Date(currentData.publish_at).toISOString().slice(0,16) : ''}
-                  onChange={(e) => setFormData({ ...currentData, publish_at: new Date(e.target.value).toISOString() })}
+                  value={
+                    currentData.publish_at
+                      ? new Date(currentData.publish_at)
+                          .toISOString()
+                          .slice(0, 16)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setFormData({
+                      ...currentData,
+                      publish_at: new Date(e.target.value).toISOString(),
+                    })
+                  }
                   placeholder="Publish At (optional)"
                   className="bg-gray-700 border-gray-600 text-white rounded p-2"
                 />
                 <input
                   type="datetime-local"
-                  value={currentData.unpublish_at ? new Date(currentData.unpublish_at).toISOString().slice(0,16) : ''}
-                  onChange={(e) => setFormData({ ...currentData, unpublish_at: new Date(e.target.value).toISOString() })}
+                  value={
+                    currentData.unpublish_at
+                      ? new Date(currentData.unpublish_at)
+                          .toISOString()
+                          .slice(0, 16)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setFormData({
+                      ...currentData,
+                      unpublish_at: new Date(e.target.value).toISOString(),
+                    })
+                  }
                   placeholder="Unpublish At (optional)"
                   className="bg-gray-700 border-gray-600 text-white rounded p-2"
                 />
@@ -429,13 +583,21 @@ export default function Admin() {
           <div className="flex space-x-2">
             <Button
               onClick={() => {
-                const table = type === 'Channel' ? 'tv_channels' :
-                           type === 'Stream' ? 'live_tv' :
-                           type === 'Radio' ? 'radio' :
-                           type === 'Team' ? 'teams' :
-                           type === 'League' ? 'leagues' :
-                           type === 'Match' ? 'matches' : 'updates';
-                
+                const table =
+                  type === "Channel"
+                    ? "tv_channels"
+                    : type === "Stream"
+                      ? "live_tv"
+                      : type === "Radio"
+                        ? "radio"
+                        : type === "Team"
+                          ? "teams"
+                          : type === "League"
+                            ? "leagues"
+                            : type === "Match"
+                              ? "matches"
+                              : "updates";
+
                 if (isEdit) {
                   handleUpdate(table, item.id, currentData);
                 } else {
@@ -450,9 +612,9 @@ export default function Admin() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              {isEdit ? 'Update' : 'Create'}
+              {isEdit ? "Update" : "Create"}
             </Button>
-            
+
             <Button
               variant="outline"
               onClick={() => {
@@ -489,7 +651,7 @@ export default function Admin() {
                   </p>
                 )}
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Button
                   size="sm"
@@ -502,7 +664,7 @@ export default function Admin() {
                 >
                   <Edit className="w-4 h-4" />
                 </Button>
-                
+
                 <Button
                   size="sm"
                   variant="outline"
@@ -533,19 +695,19 @@ export default function Admin() {
               <p className="text-sm text-gray-400">Management Dashboard</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <Badge className="bg-green-600 text-white">
               <Activity className="w-3 h-3 mr-1" />
               Online
             </Badge>
-            
+
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
                 setIsAuthenticated(false);
-                setActiveTab('dashboard');
+                setActiveTab("dashboard");
               }}
               className="border-gray-600 text-gray-300 hover:bg-gray-700"
             >
@@ -558,39 +720,66 @@ export default function Admin() {
       <main className="max-w-7xl mx-auto p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-8 bg-gray-800">
-            <TabsTrigger value="dashboard" className="data-[state=active]:bg-orange-600">
+            <TabsTrigger
+              value="dashboard"
+              className="data-[state=active]:bg-orange-600"
+            >
               <BarChart3 className="w-4 h-4 mr-2" />
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="channels" className="data-[state=active]:bg-orange-600">
+            <TabsTrigger
+              value="channels"
+              className="data-[state=active]:bg-orange-600"
+            >
               <Tv className="w-4 h-4 mr-2" />
               Channels
             </TabsTrigger>
-            <TabsTrigger value="streams" className="data-[state=active]:bg-orange-600">
+            <TabsTrigger
+              value="streams"
+              className="data-[state=active]:bg-orange-600"
+            >
               <Globe className="w-4 h-4 mr-2" />
               Streams
             </TabsTrigger>
-            <TabsTrigger value="radio" className="data-[state=active]:bg-orange-600">
+            <TabsTrigger
+              value="radio"
+              className="data-[state=active]:bg-orange-600"
+            >
               <RadioIcon className="w-4 h-4 mr-2" />
               Radio
             </TabsTrigger>
-            <TabsTrigger value="teams" className="data-[state=active]:bg-orange-600">
+            <TabsTrigger
+              value="teams"
+              className="data-[state=active]:bg-orange-600"
+            >
               <Users className="w-4 h-4 mr-2" />
               Teams
             </TabsTrigger>
-            <TabsTrigger value="leagues" className="data-[state=active]:bg-orange-600">
+            <TabsTrigger
+              value="leagues"
+              className="data-[state=active]:bg-orange-600"
+            >
               <Trophy className="w-4 h-4 mr-2" />
               Leagues
             </TabsTrigger>
-            <TabsTrigger value="matches" className="data-[state=active]:bg-orange-600">
+            <TabsTrigger
+              value="matches"
+              className="data-[state=active]:bg-orange-600"
+            >
               <Calendar className="w-4 h-4 mr-2" />
               Matches
             </TabsTrigger>
-            <TabsTrigger value="updates" className="data-[state=active]:bg-orange-600">
+            <TabsTrigger
+              value="updates"
+              className="data-[state=active]:bg-orange-600"
+            >
               <MessageSquare className="w-4 h-4 mr-2" />
               Updates
             </TabsTrigger>
-            <TabsTrigger value="messages" className="data-[state=active]:bg-orange-600">
+            <TabsTrigger
+              value="messages"
+              className="data-[state=active]:bg-orange-600"
+            >
               <Mail className="w-4 h-4 mr-2" />
               Messages
             </TabsTrigger>
@@ -600,7 +789,7 @@ export default function Admin() {
           <TabsContent value="dashboard">
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">Analytics Dashboard</h2>
-              
+
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-blue-500">
@@ -608,7 +797,9 @@ export default function Admin() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-blue-100 text-sm">TV Channels</p>
-                        <p className="text-2xl font-bold text-white">{analytics.totalChannels}</p>
+                        <p className="text-2xl font-bold text-white">
+                          {analytics.totalChannels}
+                        </p>
                       </div>
                       <Tv className="w-8 h-8 text-blue-200" />
                     </div>
@@ -620,7 +811,9 @@ export default function Admin() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-green-100 text-sm">Live Streams</p>
-                        <p className="text-2xl font-bold text-white">{analytics.totalStreams}</p>
+                        <p className="text-2xl font-bold text-white">
+                          {analytics.totalStreams}
+                        </p>
                       </div>
                       <Globe className="w-8 h-8 text-green-200" />
                     </div>
@@ -631,8 +824,12 @@ export default function Admin() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-purple-100 text-sm">Radio Stations</p>
-                        <p className="text-2xl font-bold text-white">{analytics.totalRadio}</p>
+                        <p className="text-purple-100 text-sm">
+                          Radio Stations
+                        </p>
+                        <p className="text-2xl font-bold text-white">
+                          {analytics.totalRadio}
+                        </p>
                       </div>
                       <RadioIcon className="w-8 h-8 text-purple-200" />
                     </div>
@@ -644,7 +841,9 @@ export default function Admin() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-orange-100 text-sm">Updates</p>
-                        <p className="text-2xl font-bold text-white">{analytics.totalUpdates}</p>
+                        <p className="text-2xl font-bold text-white">
+                          {analytics.totalUpdates}
+                        </p>
                       </div>
                       <MessageSquare className="w-8 h-8 text-orange-200" />
                     </div>
@@ -663,11 +862,18 @@ export default function Admin() {
                 <CardContent>
                   <div className="space-y-3">
                     {analytics.recentActivity.map((update: any) => (
-                      <div key={update.id} className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
+                      <div
+                        key={update.id}
+                        className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg"
+                      >
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                         <div className="flex-1">
-                          <p className="text-white font-medium">{update.title}</p>
-                          <p className="text-sm text-gray-400">{update.message}</p>
+                          <p className="text-white font-medium">
+                            {update.title}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            {update.message}
+                          </p>
                         </div>
                         <span className="text-xs text-gray-500">
                           {new Date(update.created_at).toLocaleDateString()}
@@ -686,7 +892,10 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">TV Channels Management</h2>
                 <Button
-                  onClick={() => { setEditingItem('new'); setFormData({}); }}
+                  onClick={() => {
+                    setEditingItem("new");
+                    setFormData({});
+                  }}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -694,8 +903,12 @@ export default function Admin() {
                 </Button>
               </div>
 
-              {editingItem && renderForm('Channel', editingItem === 'new' ? null : editingItem)}
-              {renderDataTable(channels, 'Channel', 'tv_channels')}
+              {editingItem &&
+                renderForm(
+                  "Channel",
+                  editingItem === "new" ? null : editingItem,
+                )}
+              {renderDataTable(channels, "Channel", "tv_channels")}
             </div>
           </TabsContent>
 
@@ -705,7 +918,10 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Live Streams Management</h2>
                 <Button
-                  onClick={() => { setEditingItem('new'); setFormData({}); }}
+                  onClick={() => {
+                    setEditingItem("new");
+                    setFormData({});
+                  }}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -713,8 +929,12 @@ export default function Admin() {
                 </Button>
               </div>
 
-              {editingItem && renderForm('Stream', editingItem === 'new' ? null : editingItem)}
-              {renderDataTable(liveTV, 'Stream', 'live_tv')}
+              {editingItem &&
+                renderForm(
+                  "Stream",
+                  editingItem === "new" ? null : editingItem,
+                )}
+              {renderDataTable(liveTV, "Stream", "live_tv")}
             </div>
           </TabsContent>
 
@@ -722,9 +942,14 @@ export default function Admin() {
           <TabsContent value="radio">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Radio Stations Management</h2>
+                <h2 className="text-2xl font-bold">
+                  Radio Stations Management
+                </h2>
                 <Button
-                  onClick={() => { setEditingItem('new'); setFormData({}); }}
+                  onClick={() => {
+                    setEditingItem("new");
+                    setFormData({});
+                  }}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -732,8 +957,9 @@ export default function Admin() {
                 </Button>
               </div>
 
-              {editingItem && renderForm('Radio', editingItem === 'new' ? null : editingItem)}
-              {renderDataTable(radio, 'Radio', 'radio')}
+              {editingItem &&
+                renderForm("Radio", editingItem === "new" ? null : editingItem)}
+              {renderDataTable(radio, "Radio", "radio")}
             </div>
           </TabsContent>
 
@@ -743,28 +969,66 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Teams Management</h2>
                 <div className="flex gap-2">
-                  <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700" onClick={() => download('teams.csv', toCSV(teams, ['id','name','logo_url','created_at']))}>Export CSV</Button>
+                  <Button
+                    variant="outline"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    onClick={() =>
+                      download(
+                        "teams.csv",
+                        toCSV(teams, ["id", "name", "logo_url", "created_at"]),
+                      )
+                    }
+                  >
+                    Export CSV
+                  </Button>
                   <label className="inline-flex items-center">
-                    <input type="file" accept=".csv" className="hidden" onChange={async (e) => {
-                      const f = e.target.files?.[0]; if (!f) return;
-                      const rows = await parseCSV(f);
-                      const header = rows[0];
-                      const idxName = header.indexOf('name');
-                      const idxLogo = header.indexOf('logo_url');
-                      const payload = rows.slice(1).map(r => ({ name: r[idxName], logo_url: r[idxLogo] || null })).filter(r => r.name);
-                      if (payload.length) { await supabase.from('teams').insert(payload); fetchAllData(); }
-                      e.currentTarget.value = '';
-                    }} />
-                    <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">Import CSV</Button>
+                    <input
+                      type="file"
+                      accept=".csv"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        const rows = await parseCSV(f);
+                        const header = rows[0];
+                        const idxName = header.indexOf("name");
+                        const idxLogo = header.indexOf("logo_url");
+                        const payload = rows
+                          .slice(1)
+                          .map((r) => ({
+                            name: r[idxName],
+                            logo_url: r[idxLogo] || null,
+                          }))
+                          .filter((r) => r.name);
+                        if (payload.length) {
+                          await supabase.from("teams").insert(payload);
+                          fetchAllData();
+                        }
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    >
+                      Import CSV
+                    </Button>
                   </label>
-                  <Button onClick={() => { setEditingItem('new'); setFormData({}); }} className="bg-green-600 hover:bg-green-700">
+                  <Button
+                    onClick={() => {
+                      setEditingItem("new");
+                      setFormData({});
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Team
                   </Button>
                 </div>
               </div>
-              {editingItem && renderForm('Team', editingItem === 'new' ? null : editingItem)}
-              {renderDataTable(teams, 'Team', 'teams')}
+              {editingItem &&
+                renderForm("Team", editingItem === "new" ? null : editingItem)}
+              {renderDataTable(teams, "Team", "teams")}
             </div>
           </TabsContent>
 
@@ -774,28 +1038,74 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Leagues Management</h2>
                 <div className="flex gap-2">
-                  <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700" onClick={() => download('leagues.csv', toCSV(leagues, ['id','name','logo_url','created_at']))}>Export CSV</Button>
+                  <Button
+                    variant="outline"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    onClick={() =>
+                      download(
+                        "leagues.csv",
+                        toCSV(leagues, [
+                          "id",
+                          "name",
+                          "logo_url",
+                          "created_at",
+                        ]),
+                      )
+                    }
+                  >
+                    Export CSV
+                  </Button>
                   <label className="inline-flex items-center">
-                    <input type="file" accept=".csv" className="hidden" onChange={async (e) => {
-                      const f = e.target.files?.[0]; if (!f) return;
-                      const rows = await parseCSV(f);
-                      const header = rows[0];
-                      const idxName = header.indexOf('name');
-                      const idxLogo = header.indexOf('logo_url');
-                      const payload = rows.slice(1).map(r => ({ name: r[idxName], logo_url: r[idxLogo] || null })).filter(r => r.name);
-                      if (payload.length) { await supabase.from('leagues').insert(payload); fetchAllData(); }
-                      e.currentTarget.value = '';
-                    }} />
-                    <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">Import CSV</Button>
+                    <input
+                      type="file"
+                      accept=".csv"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        const rows = await parseCSV(f);
+                        const header = rows[0];
+                        const idxName = header.indexOf("name");
+                        const idxLogo = header.indexOf("logo_url");
+                        const payload = rows
+                          .slice(1)
+                          .map((r) => ({
+                            name: r[idxName],
+                            logo_url: r[idxLogo] || null,
+                          }))
+                          .filter((r) => r.name);
+                        if (payload.length) {
+                          await supabase.from("leagues").insert(payload);
+                          fetchAllData();
+                        }
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    >
+                      Import CSV
+                    </Button>
                   </label>
-                  <Button onClick={() => { setEditingItem('new'); setFormData({}); }} className="bg-green-600 hover:bg-green-700">
+                  <Button
+                    onClick={() => {
+                      setEditingItem("new");
+                      setFormData({});
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add League
                   </Button>
                 </div>
               </div>
-              {editingItem && renderForm('League', editingItem === 'new' ? null : editingItem)}
-              {renderDataTable(leagues, 'League', 'leagues')}
+              {editingItem &&
+                renderForm(
+                  "League",
+                  editingItem === "new" ? null : editingItem,
+                )}
+              {renderDataTable(leagues, "League", "leagues")}
             </div>
           </TabsContent>
 
@@ -809,16 +1119,33 @@ export default function Admin() {
                     variant="outline"
                     className="border-gray-600 text-gray-300 hover:bg-gray-700"
                     onClick={() => {
-                      const rows = matches.map(m => ({
+                      const rows = matches.map((m) => ({
                         id: m.id,
-                        home_team: teams.find(t=>t.id===m.home_team_id)?.name || m.home_team_id,
-                        away_team: teams.find(t=>t.id===m.away_team_id)?.name || m.away_team_id,
-                        league: leagues.find(l=>l.id===m.league_id)?.name || m.league_id,
+                        home_team:
+                          teams.find((t) => t.id === m.home_team_id)?.name ||
+                          m.home_team_id,
+                        away_team:
+                          teams.find((t) => t.id === m.away_team_id)?.name ||
+                          m.away_team_id,
+                        league:
+                          leagues.find((l) => l.id === m.league_id)?.name ||
+                          m.league_id,
                         match_time: m.match_time,
-                        publish_at: (m as any).publish_at || '',
-                        unpublish_at: (m as any).unpublish_at || ''
+                        publish_at: (m as any).publish_at || "",
+                        unpublish_at: (m as any).unpublish_at || "",
                       }));
-                      download('matches.csv', toCSV(rows as any[], ['id','home_team','away_team','league','match_time','publish_at','unpublish_at']));
+                      download(
+                        "matches.csv",
+                        toCSV(rows as any[], [
+                          "id",
+                          "home_team",
+                          "away_team",
+                          "league",
+                          "match_time",
+                          "publish_at",
+                          "unpublish_at",
+                        ]),
+                      );
                     }}
                   >
                     Export CSV
@@ -829,59 +1156,115 @@ export default function Admin() {
                       accept=".csv"
                       className="hidden"
                       onChange={async (e) => {
-                        const f = e.target.files?.[0]; if (!f) return;
+                        const f = e.target.files?.[0];
+                        if (!f) return;
                         const rows = await parseCSV(f);
                         const header = rows[0];
-                        const hHome = header.indexOf('home_team');
-                        const hAway = header.indexOf('away_team');
-                        const hLeague = header.indexOf('league');
-                        const hTime = header.indexOf('match_time');
-                        const hPub = header.indexOf('publish_at');
-                        const hUnpub = header.indexOf('unpublish_at');
-                        const nameToId = (name: string, list: {id:number, name:string}[]) => list.find(x => x.name === name)?.id || Number(name);
-                        const payload = rows.slice(1).map(r => ({
-                          home_team_id: nameToId(r[hHome], teams),
-                          away_team_id: nameToId(r[hAway], teams),
-                          league_id: nameToId(r[hLeague], leagues),
-                          match_time: new Date(r[hTime]).toISOString(),
-                          ...(hPub>-1 && r[hPub] ? { publish_at: new Date(r[hPub]).toISOString() } : {}),
-                          ...(hUnpub>-1 && r[hUnpub] ? { unpublish_at: new Date(r[hUnpub]).toISOString() } : {}),
-                        })).filter(x => x.home_team_id && x.away_team_id && x.league_id && x.match_time);
-                        if (payload.length) { await supabase.from('matches').insert(payload as any[]); fetchAllData(); }
-                        e.currentTarget.value = '';
+                        const hHome = header.indexOf("home_team");
+                        const hAway = header.indexOf("away_team");
+                        const hLeague = header.indexOf("league");
+                        const hTime = header.indexOf("match_time");
+                        const hPub = header.indexOf("publish_at");
+                        const hUnpub = header.indexOf("unpublish_at");
+                        const nameToId = (
+                          name: string,
+                          list: { id: number; name: string }[],
+                        ) =>
+                          list.find((x) => x.name === name)?.id || Number(name);
+                        const payload = rows
+                          .slice(1)
+                          .map((r) => ({
+                            home_team_id: nameToId(r[hHome], teams),
+                            away_team_id: nameToId(r[hAway], teams),
+                            league_id: nameToId(r[hLeague], leagues),
+                            match_time: new Date(r[hTime]).toISOString(),
+                            ...(hPub > -1 && r[hPub]
+                              ? { publish_at: new Date(r[hPub]).toISOString() }
+                              : {}),
+                            ...(hUnpub > -1 && r[hUnpub]
+                              ? {
+                                  unpublish_at: new Date(
+                                    r[hUnpub],
+                                  ).toISOString(),
+                                }
+                              : {}),
+                          }))
+                          .filter(
+                            (x) =>
+                              x.home_team_id &&
+                              x.away_team_id &&
+                              x.league_id &&
+                              x.match_time,
+                          );
+                        if (payload.length) {
+                          await supabase
+                            .from("matches")
+                            .insert(payload as any[]);
+                          fetchAllData();
+                        }
+                        e.currentTarget.value = "";
                       }}
                     />
-                    <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">Import CSV</Button>
+                    <Button
+                      variant="outline"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    >
+                      Import CSV
+                    </Button>
                   </label>
-                  <Button onClick={() => setEditingItem('new')} className="bg-green-600 hover:bg-green-700">
+                  <Button
+                    onClick={() => setEditingItem("new")}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Match
                   </Button>
                 </div>
               </div>
 
-              {editingItem && renderForm('Match', editingItem === 'new' ? null : editingItem)}
+              {editingItem &&
+                renderForm("Match", editingItem === "new" ? null : editingItem)}
 
               {/* Matches list with sources management */}
               <div className="space-y-4">
                 {matches.map((m) => {
-                  const home = teams.find(t => t.id === m.home_team_id);
-                  const away = teams.find(t => t.id === m.away_team_id);
-                  const league = leagues.find(l => l.id === m.league_id);
-                  const sources = matchSources.filter(s => s.match_id === m.id);
+                  const home = teams.find((t) => t.id === m.home_team_id);
+                  const away = teams.find((t) => t.id === m.away_team_id);
+                  const league = leagues.find((l) => l.id === m.league_id);
+                  const sources = matchSources.filter(
+                    (s) => s.match_id === m.id,
+                  );
                   return (
                     <Card key={m.id} className="bg-gray-800 border-gray-700">
                       <CardContent className="p-4 space-y-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h3 className="font-semibold text-white">{home?.name} vs {away?.name}</h3>
-                            <p className="text-sm text-gray-400">{league?.name} • {new Date(m.match_time).toLocaleString()}</p>
+                            <h3 className="font-semibold text-white">
+                              {home?.name} vs {away?.name}
+                            </h3>
+                            <p className="text-sm text-gray-400">
+                              {league?.name} •{" "}
+                              {new Date(m.match_time).toLocaleString()}
+                            </p>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Button size="sm" variant="outline" onClick={() => { setEditingItem(m); setFormData(m); }} className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingItem(m);
+                                setFormData(m);
+                              }}
+                              className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                            >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleDelete('matches', m.id)} className="border-red-600 text-red-400 hover:bg-red-900">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDelete("matches", m.id)}
+                              className="border-red-600 text-red-400 hover:bg-red-900"
+                            >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
@@ -890,36 +1273,82 @@ export default function Admin() {
                         {/* Add source with searchable picker */}
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
                           <div className="md:col-span-3">
-                            <Popover open={!!pickerOpen[m.id]} onOpenChange={(open) => setPickerOpen(prev => ({ ...prev, [m.id]: open }))}>
+                            <Popover
+                              open={!!pickerOpen[m.id]}
+                              onOpenChange={(open) =>
+                                setPickerOpen((prev) => ({
+                                  ...prev,
+                                  [m.id]: open,
+                                }))
+                              }
+                            >
                               <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full justify-between border-gray-600 text-gray-200 hover:bg-gray-700">
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-between border-gray-600 text-gray-200 hover:bg-gray-700"
+                                >
                                   <span className="truncate">
-                                    {selectedMatchSource[m.id]?.name ? `${selectedMatchSource[m.id]?.name} (${selectedMatchSource[m.id]?.type})` : 'Search channel or stream'}
+                                    {selectedMatchSource[m.id]?.name
+                                      ? `${selectedMatchSource[m.id]?.name} (${selectedMatchSource[m.id]?.type})`
+                                      : "Search channel or stream"}
                                   </span>
                                   <Search className="w-4 h-4 ml-2 opacity-70" />
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-80 p-0 bg-gray-800 border-gray-700 text-white">
                                 <Command>
-                                  <CommandInput placeholder="Search channels or streams..." className="text-white placeholder:text-gray-400" />
+                                  <CommandInput
+                                    placeholder="Search channels or streams..."
+                                    className="text-white placeholder:text-gray-400"
+                                  />
                                   <CommandList>
-                                    <CommandEmpty>No results found.</CommandEmpty>
+                                    <CommandEmpty>
+                                      No results found.
+                                    </CommandEmpty>
                                     <CommandGroup heading="Channels">
-                                      {channels.map(c => (
-                                        <CommandItem key={`channel-${c.id}`} value={`channel-${c.name}`} onSelect={() => {
-                                          setSelectedMatchSource(prev => ({ ...prev, [m.id]: { type: 'channel', id: c.id, name: c.name } }));
-                                          setPickerOpen(prev => ({ ...prev, [m.id]: false }));
-                                        }}>
+                                      {channels.map((c) => (
+                                        <CommandItem
+                                          key={`channel-${c.id}`}
+                                          value={`channel-${c.name}`}
+                                          onSelect={() => {
+                                            setSelectedMatchSource((prev) => ({
+                                              ...prev,
+                                              [m.id]: {
+                                                type: "channel",
+                                                id: c.id,
+                                                name: c.name,
+                                              },
+                                            }));
+                                            setPickerOpen((prev) => ({
+                                              ...prev,
+                                              [m.id]: false,
+                                            }));
+                                          }}
+                                        >
                                           {c.name}
                                         </CommandItem>
                                       ))}
                                     </CommandGroup>
                                     <CommandGroup heading="Streams">
-                                      {liveTV.map(s => (
-                                        <CommandItem key={`stream-${s.id}`} value={`stream-${s.name}`} onSelect={() => {
-                                          setSelectedMatchSource(prev => ({ ...prev, [m.id]: { type: 'stream', id: s.id, name: s.name } }));
-                                          setPickerOpen(prev => ({ ...prev, [m.id]: false }));
-                                        }}>
+                                      {liveTV.map((s) => (
+                                        <CommandItem
+                                          key={`stream-${s.id}`}
+                                          value={`stream-${s.name}`}
+                                          onSelect={() => {
+                                            setSelectedMatchSource((prev) => ({
+                                              ...prev,
+                                              [m.id]: {
+                                                type: "stream",
+                                                id: s.id,
+                                                name: s.name,
+                                              },
+                                            }));
+                                            setPickerOpen((prev) => ({
+                                              ...prev,
+                                              [m.id]: false,
+                                            }));
+                                          }}
+                                        >
                                           {s.name}
                                         </CommandItem>
                                       ))}
@@ -929,48 +1358,105 @@ export default function Admin() {
                               </PopoverContent>
                             </Popover>
                           </div>
-                          <input id={`label-${m.id}`} placeholder="Label (optional)" className="bg-gray-700 border-gray-600 text-white rounded p-2" />
+                          <input
+                            id={`label-${m.id}`}
+                            placeholder="Label (optional)"
+                            className="bg-gray-700 border-gray-600 text-white rounded p-2"
+                          />
                           <Button
                             size="sm"
                             className="bg-green-600 hover:bg-green-700"
                             disabled={!!addingSourceBusy[m.id]}
                             onClick={async () => {
-                              const labelEl = document.getElementById(`label-${m.id}`) as HTMLInputElement | null;
+                              const labelEl = document.getElementById(
+                                `label-${m.id}`,
+                              ) as HTMLInputElement | null;
                               const sel = selectedMatchSource[m.id];
                               if (!sel) {
-                                toast({ title: 'Pick a source first', description: 'Search and select a channel or stream.' });
+                                toast({
+                                  title: "Pick a source first",
+                                  description:
+                                    "Search and select a channel or stream.",
+                                });
                                 return;
                               }
-                              const payload: any = { match_id: m.id, source_type: sel.type, source_id: sel.id };
-                              if (labelEl && labelEl.value) payload.label = labelEl.value;
-                              setAddingSourceBusy(prev => ({ ...prev, [m.id]: true }));
-                              const { error } = await supabase.from('match_sources').insert([payload]);
-                              setAddingSourceBusy(prev => ({ ...prev, [m.id]: false }));
+                              const payload: any = {
+                                match_id: m.id,
+                                source_type: sel.type,
+                                source_id: sel.id,
+                              };
+                              if (labelEl && labelEl.value)
+                                payload.label = labelEl.value;
+                              setAddingSourceBusy((prev) => ({
+                                ...prev,
+                                [m.id]: true,
+                              }));
+                              const { error } = await supabase
+                                .from("match_sources")
+                                .insert([payload]);
+                              setAddingSourceBusy((prev) => ({
+                                ...prev,
+                                [m.id]: false,
+                              }));
                               if (error) {
-                                toast({ title: 'Failed to add source', description: error.message });
+                                toast({
+                                  title: "Failed to add source",
+                                  description: error.message,
+                                });
                               } else {
-                                toast({ title: 'Source added', description: `${sel.name} was linked to this match.` });
-                                setSelectedMatchSource(prev => ({ ...prev, [m.id]: null }));
-                                if (labelEl) labelEl.value = '';
+                                toast({
+                                  title: "Source added",
+                                  description: `${sel.name} was linked to this match.`,
+                                });
+                                setSelectedMatchSource((prev) => ({
+                                  ...prev,
+                                  [m.id]: null,
+                                }));
+                                if (labelEl) labelEl.value = "";
                                 fetchAllData();
                               }
                             }}
                           >
-                            {addingSourceBusy[m.id] ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add Source'}
+                            {addingSourceBusy[m.id] ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              "Add Source"
+                            )}
                           </Button>
                         </div>
 
                         {/* Current sources */}
                         <div className="space-y-2">
                           {sources.length === 0 ? (
-                            <p className="text-sm text-gray-500">No sources added yet.</p>
+                            <p className="text-sm text-gray-500">
+                              No sources added yet.
+                            </p>
                           ) : (
-                            sources.map(s => {
-                              const name = s.source_type === 'channel' ? channels.find(c => c.id === s.source_id)?.name : liveTV.find(v => v.id === s.source_id)?.name;
+                            sources.map((s) => {
+                              const name =
+                                s.source_type === "channel"
+                                  ? channels.find((c) => c.id === s.source_id)
+                                      ?.name
+                                  : liveTV.find((v) => v.id === s.source_id)
+                                      ?.name;
                               return (
-                                <div key={s.id} className="flex items-center justify-between bg-gray-700 rounded p-2">
-                                  <span className="text-sm text-white">{s.label || name || `${s.source_type} #${s.source_id}`}</span>
-                                  <Button size="sm" variant="outline" onClick={() => handleDelete('match_sources', s.id)} className="border-red-600 text-red-400 hover:bg-red-900">
+                                <div
+                                  key={s.id}
+                                  className="flex items-center justify-between bg-gray-700 rounded p-2"
+                                >
+                                  <span className="text-sm text-white">
+                                    {s.label ||
+                                      name ||
+                                      `${s.source_type} #${s.source_id}`}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      handleDelete("match_sources", s.id)
+                                    }
+                                    className="border-red-600 text-red-400 hover:bg-red-900"
+                                  >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
                                 </div>
@@ -992,7 +1478,10 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Updates Management</h2>
                 <Button
-                  onClick={() => { setEditingItem('new'); setFormData({}); }}
+                  onClick={() => {
+                    setEditingItem("new");
+                    setFormData({});
+                  }}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -1000,8 +1489,12 @@ export default function Admin() {
                 </Button>
               </div>
 
-              {editingItem && renderForm('Update', editingItem === 'new' ? null : editingItem)}
-              {renderDataTable(updates, 'Update', 'updates')}
+              {editingItem &&
+                renderForm(
+                  "Update",
+                  editingItem === "new" ? null : editingItem,
+                )}
+              {renderDataTable(updates, "Update", "updates")}
             </div>
           </TabsContent>
 
@@ -1010,15 +1503,24 @@ export default function Admin() {
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">Contact Messages</h2>
               <div className="space-y-4">
-                {messages.map(msg => (
+                {messages.map((msg) => (
                   <Card key={msg.id} className="bg-gray-800 border-gray-700">
                     <CardContent className="p-4 flex items-start justify-between">
                       <div>
                         <p className="text-white font-medium">{msg.email}</p>
-                        <p className="text-gray-300 mt-1 whitespace-pre-wrap">{msg.content}</p>
-                        <p className="text-xs text-gray-500 mt-2">{new Date(msg.created_at).toLocaleString()}</p>
+                        <p className="text-gray-300 mt-1 whitespace-pre-wrap">
+                          {msg.content}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {new Date(msg.created_at).toLocaleString()}
+                        </p>
                       </div>
-                      <Button size="sm" variant="outline" onClick={() => handleDelete('messages', msg.id)} className="border-red-600 text-red-400 hover:bg-red-900">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete("messages", msg.id)}
+                        className="border-red-600 text-red-400 hover:bg-red-900"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </CardContent>
