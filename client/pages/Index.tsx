@@ -706,8 +706,7 @@ export default function Index() {
             <div className="max-w-2xl mx-auto">
               <Card className="bg-gray-800 border-gray-700">
                 <CardContent className="p-8">
-                  <div className="text-center space-y-6">
-                    {/* Logo */}
+                  <div className="space-y-6">
                     <div className="flex justify-center">
                       <img
                         src="https://i.ibb.co/CsB7SJp0/best.png"
@@ -716,69 +715,71 @@ export default function Index() {
                       />
                     </div>
 
-                    {/* Contact Info */}
-                    <div className="space-y-4">
+                    <div className="space-y-2 text-center">
                       <h3 className="text-2xl font-bold text-white">LQR SPORT</h3>
                       <p className="text-gray-300">Haitian Media Hub</p>
-
-                      {/* Email */}
-                      <div className="bg-gray-700 rounded-lg p-4">
-                        <div className="flex items-center justify-center space-x-3">
-                          <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
-                            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
-                            </svg>
-                          </div>
-                          <div className="text-left">
-                            <p className="text-sm text-gray-400">Email</p>
-                            <p className="text-lg font-semibold text-white">mail.lqrsport@dr.com</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Support */}
-                      <div className="bg-gray-700 rounded-lg p-4">
-                        <div className="flex items-center justify-center space-x-3">
-                          <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="text-left">
-                            <p className="text-sm text-gray-400">Support</p>
-                            <p className="text-lg font-semibold text-white">We're here to help</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Location */}
-                      <div className="bg-gray-700 rounded-lg p-4">
-                        <div className="flex items-center justify-center space-x-3">
-                          <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
-                            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
-                            </svg>
-                          </div>
-                          <div className="text-left">
-                            <p className="text-sm text-gray-400">Serving</p>
-                            <p className="text-lg font-semibold text-white">Haiti & Worldwide</p>
-                          </div>
-                        </div>
-                      </div>
                     </div>
 
-                    {/* Description */}
-                    <div className="pt-4 border-t border-gray-600">
-                      <p className="text-gray-300 leading-relaxed">
-                        Get in touch with us for any questions, feedback, or support regarding our Haitian streaming services.
-                        We're here to help you enjoy the best of Haitian media content.
-                      </p>
-
-                      <div className="mt-6 pt-4 border-t border-gray-700">
-                        <p className="text-xs text-gray-500 text-center">
-                          LQR SPORT WAS CREATED January 15, 2024
-                        </p>
+                    {contactStatus && (
+                      <div className={`rounded p-3 text-sm ${contactStatus.type === 'success' ? 'bg-green-600/20 text-green-300' : 'bg-red-600/20 text-red-300'}`}>
+                        {contactStatus.text}
                       </div>
-                    </div>
+                    )}
+
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!contactEmail || !contactMessage) {
+                          setContactStatus({ type: 'error', text: 'Please enter your email and message.' });
+                          setTimeout(() => setContactStatus(null), 3000);
+                          return;
+                        }
+                        setContactSubmitting(true);
+                        const { error } = await supabase.from('messages').insert([{ email: contactEmail, content: contactMessage }]);
+                        if (error) {
+                          setContactStatus({ type: 'error', text: 'Failed to send message. Try again later.' });
+                        } else {
+                          setContactStatus({ type: 'success', text: 'Message sent! We will get back to you soon.' });
+                          setContactEmail('');
+                          setContactMessage('');
+                        }
+                        setContactSubmitting(false);
+                        setTimeout(() => setContactStatus(null), 3000);
+                      }}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Your Email</label>
+                        <Input
+                          type="email"
+                          value={contactEmail}
+                          onChange={(e) => setContactEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Message</label>
+                        <Textarea
+                          value={contactMessage}
+                          onChange={(e) => setContactMessage(e.target.value)}
+                          placeholder="How can we help?"
+                          className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 min-h-[120px]"
+                          required
+                        />
+                      </div>
+                      <Button type="submit" disabled={contactSubmitting} className="bg-orange-600 hover:bg-orange-700 text-white">
+                        {contactSubmitting ? (
+                          <div className="flex items-center space-x-2">
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>Sending...</span>
+                          </div>
+                        ) : (
+                          'Send Message'
+                        )}
+                      </Button>
+                    </form>
                   </div>
                 </CardContent>
               </Card>
