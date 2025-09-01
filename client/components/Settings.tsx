@@ -206,22 +206,42 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* About Section */}
+      {/* Favorites Overview */}
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
           <CardTitle className="text-white flex items-center space-x-2">
             <Heart className="w-5 h-5 text-red-400" />
-            <span>About Favorites</span>
+            <span>Your Favorites</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-gray-300 space-y-2 text-sm">
-            <p>• Favorites are stored locally on your device</p>
-            <p>• Export your data regularly to keep a backup</p>
-            <p>• You can favorite channels, streams, and radio stations</p>
-            <p>• Use the heart icon on any content to add to favorites</p>
-            <p>• Access all your favorites from the menu anytime</p>
-          </div>
+          {favorites.length === 0 ? (
+            <p className="text-gray-400">No favorites yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {favorites.map((f) => (
+                <div key={`${f.type}-${f.id}`} className="flex items-center justify-between bg-gray-700 rounded p-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${f.type==='radio' ? 'bg-purple-600' : f.type==='channel' ? 'bg-blue-600' : 'bg-green-600'}`}>
+                      {f.type==='radio' ? <RadioIcon className="w-4 h-4 text-white" /> : f.type==='channel' ? <Users className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white" />}
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">{f.name || f.title}</p>
+                      <p className="text-xs text-gray-300 uppercase">{f.type}</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { removeFromFavorites(f.id, f.type); loadFavorites(); }}
+                    className="border-red-600 text-red-400 hover:bg-red-900"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
