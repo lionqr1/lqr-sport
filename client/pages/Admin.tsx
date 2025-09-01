@@ -187,7 +187,7 @@ export default function Admin() {
 
   const renderForm = (type: string, item?: any) => {
     const isEdit = !!item;
-    const currentData = isEdit ? item : formData;
+    const currentData = formData;
 
     return (
       <Card className="bg-gray-800 border-gray-700">
